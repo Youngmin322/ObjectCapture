@@ -6,56 +6,52 @@
 //
 
 import SwiftUI
-import SwiftData
+import RealityKit
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @State private var session = ObjectCaptureSession()
+    @State private var isCapturing = false // UI 상태 관리
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        ZStack {
+            // 카메라 화면
+            ObjectCaptureView(session: session)
+            // UI 레이어
+            VStack {
+                Spacer()
+                
+                Button(action: {
+                    if isCapturing {
+                        session.finish()
+                        print("촬영 종료")
+                    } else {
+                        session.startCapturing()
+                        print("촬영 시작")
                     }
+                    isCapturing.toggle() // 상태 토글
+                }) {
+                    Text(isCapturing ? "완료 (Finish)" : "촬영 시작 (Start)")
+                        .font(.title3)
+                        .bold()
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(isCapturing ? Color.red : Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(15)
+                        .padding(.horizontal, 40)
+                        .padding(.bottom, 50)
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
             }
         }
+        .onAppear {
+            // 폴더 만들고 세션 준비
+            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let scansFolder = documentsPath.appendingPathComponent("Scans")
+            try? FileManager.default.createDirectory(at: scansFolder, withIntermediateDirectories: true)
+            
+            var config = ObjectCaptureSession.Configuration()
+            config.isOverCaptureEnabled = true
+            session.start(imagesDirectory: scansFolder, configuration: config)
+        }
     }
-}
-
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
 }
