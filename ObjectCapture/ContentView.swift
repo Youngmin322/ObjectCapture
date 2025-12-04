@@ -12,8 +12,8 @@ import QuickLook
 struct ContentView: View {
     @State private var session = ObjectCaptureSession()
     @State private var isCapturing = false
-    @State private var showProcessButton = false // 촬영 끝나면 버튼 보여주기용
-    @State private var processingMessage = "" // 진행 상황 표시
+    @State private var showProcessButton = false
+    @State private var processingMessage = ""
     @State private var showModelView = false
     @State private var modelURL: URL?
 
@@ -24,7 +24,6 @@ struct ContentView: View {
             VStack {
                 Spacer()
                 
-                // 진행 상황 메시지 (처리 중일 때 뜸)
                 if !processingMessage.isEmpty {
                     Text(processingMessage)
                         .font(.headline)
@@ -50,23 +49,50 @@ struct ContentView: View {
                     .padding(.horizontal, 40)
                     .padding(.bottom, 50)
                     
-                } else {
+                } else if case .ready = session.state {
+                    // Continue 버튼
                     Button(action: {
-                        if isCapturing {
-                            session.finish()
-                            isCapturing = false
-                            showProcessButton = true
-                            print("촬영 종료")
-                        } else {
-                            session.startCapturing()
-                            isCapturing = true
-                            print("촬영 시작")
-                        }
+                        session.startDetecting()
                     }) {
-                        Text(isCapturing ? "촬영 완료 (Finish)" : "촬영 시작 (Start)")
+                        Text("Continue")
+                            .font(.title3).bold() 
+                            .padding().frame(maxWidth: .infinity)
+                            .background(Color.orange)
+                            .foregroundColor(.white)
+                            .cornerRadius(15)
+                    }
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 50)
+                    
+                } else if case .detecting = session.state {
+                    // 감지 완료 후 촬영 시작 버튼
+                    Button(action: {
+                        session.startCapturing()
+                        isCapturing = true
+                        print("촬영 시작")
+                    }) {
+                        Text("촬영 시작")
                             .font(.title3).bold()
                             .padding().frame(maxWidth: .infinity)
-                            .background(isCapturing ? Color.red : Color.blue)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(15)
+                    }
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 50)
+                    
+                } else if case .capturing = session.state {
+                    // 촬영 중//
+                    Button(action: {
+                        session.finish()
+                        isCapturing = false
+                        showProcessButton = true
+                        print("촬영 종료")
+                    }) {
+                        Text("촬영 완료")
+                            .font(.title3).bold()
+                            .padding().frame(maxWidth: .infinity)
+                            .background(Color.red)
                             .foregroundColor(.white)
                             .cornerRadius(15)
                     }
@@ -84,18 +110,17 @@ struct ContentView: View {
                     print("뷰어 닫힘")
                     showProcessButton = false
                     processingMessage = ""
-                    setupSession() // 세션 다시 준비
+                    isCapturing = false
+                    setupSession()
                 }
             }
         }
     }
     
-    // 세션 초기화 및 폴더 설정
     func setupSession() {
         guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
         let scansFolder = documentsPath.appendingPathComponent("Scans")
         
-        // 기존 폴더가 있으면 지우고 다시 시작
         if FileManager.default.fileExists(atPath: scansFolder.path) {
             try? FileManager.default.removeItem(at: scansFolder)
         }
@@ -107,7 +132,6 @@ struct ContentView: View {
         session.start(imagesDirectory: scansFolder, configuration: config)
     }
     
-    // 3D 모델 생성 함수
     func startReconstruction() {
         processingMessage = "변환 준비 중..."
         
@@ -117,10 +141,7 @@ struct ContentView: View {
         
         Task {
             do {
-                // 세션 생성
                 let photoSession = try PhotogrammetrySession(input: inputFolder)
-                
-                // 처리 시작 요청
                 try photoSession.process(requests: [.modelFile(url: outputFile)])
                 
                 for try await output in photoSession.outputs {
@@ -133,6 +154,8 @@ struct ContentView: View {
                     case .processingComplete:
                         await MainActor.run {
                             processingMessage = "완성 (MyModel.usdz)"
+                            modelURL = outputFile
+                            showModelView = true
                         }
                         print("성공 파일 위치: \(outputFile)")
                         
@@ -147,7 +170,6 @@ struct ContentView: View {
                     }
                 }
             } catch {
-                // 여기서 모든 에러를 잡습니다.
                 print("3D 변환 실패: \(error)")
                 await MainActor.run {
                     processingMessage = "변환 실패: \(error.localizedDescription)"
@@ -157,10 +179,9 @@ struct ContentView: View {
     }
 }
 
-
 struct ARQuickLookView: UIViewControllerRepresentable {
     var modelFile: URL
-    var endCaptureCallback: () -> Void // 닫을 때 실행할 함수
+    var endCaptureCallback: () -> Void
     
     func makeUIViewController(context: Context) -> QLPreviewController {
         let controller = QLPreviewController()
@@ -171,30 +192,27 @@ struct ARQuickLookView: UIViewControllerRepresentable {
     
     func updateUIViewController(_ uiViewController: QLPreviewController, context: Context) {}
 
-        func makeCoordinator() -> Coordinator {
-            Coordinator(parent: self)
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    class Coordinator: NSObject, QLPreviewControllerDataSource, QLPreviewControllerDelegate {
+        let parent: ARQuickLookView
+
+        init(parent: ARQuickLookView) {
+            self.parent = parent
         }
 
-        class Coordinator: NSObject, QLPreviewControllerDataSource, QLPreviewControllerDelegate {
-            let parent: ARQuickLookView
+        func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+            return 1
+        }
 
-            init(parent: ARQuickLookView) {
-                self.parent = parent
-            }
-
-            // 보여줄 파일 개수 (1개)
-            func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
-                return 1
-            }
-
-            // 실제 파일 위치 알려주기
-            func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
-                return parent.modelFile as QLPreviewItem
-            }
-            
-            // 뷰어가 닫힐 때 호출
-            func previewControllerDidDismiss(_ controller: QLPreviewController) {
-                parent.endCaptureCallback()
-            }
+        func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+            return parent.modelFile as QLPreviewItem
+        }
+        
+        func previewControllerDidDismiss(_ controller: QLPreviewController) {
+            parent.endCaptureCallback()
         }
     }
+}
