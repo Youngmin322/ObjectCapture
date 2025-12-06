@@ -40,7 +40,7 @@ struct CaptureButton: View {
         if session.state == .ready {
             switch appModel.captureMode {
                 case .object:
-                    return "Continue"  // 👈 이게 파란 Continue 버튼!
+                    return "Continue"
                 case .area:
                     return "Start Capture"
             }
