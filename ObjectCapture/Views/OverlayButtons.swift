@@ -14,7 +14,7 @@ struct CaptureButton: View {
     @Binding var hasDetectionFailed: Bool
     
     let showProcessButton: Bool
-    let onContinue: () -> Void
+    let onContinue: () -> Void 
     let onStartCapture: () -> Void
     let onFinishCapture: () -> Void
     let onProcess: () -> Void
@@ -66,47 +66,6 @@ struct CaptureButton: View {
         }
     }
 }
-
-//struct CaptureButtonView: View {
-//    
-//    var body: some View {
-//        Group {
-//            if showProcessButton {
-//                ActionButton(
-//                    title: "3D 모델 만들기",
-//                    backgroundColor: .green,
-//                    action: onProcess
-//                )
-//            } else {
-//                switch session.state {
-//                case .ready:
-//                    ActionButton(
-//                        title: "Continue",
-//                        backgroundColor: .blue,
-//                        action: onContinue
-//                    )
-//                    
-//                case .detecting:
-//                    ActionButton(
-//                        title: "촬영 시작",
-//                        backgroundColor: .blue,
-//                        action: onStartCapture
-//                    )
-//                    
-//                case .capturing:
-//                    ActionButton(
-//                        title: "촬영 완료",
-//                        backgroundColor: .red,
-//                        action: onFinishCapture
-//                    )
-//                    
-//                default:
-//                    EmptyView()
-//                }
-//            }
-//        }
-//    }
-//}
 
 // MARK: - Action Button Component
 struct ActionButton: View {

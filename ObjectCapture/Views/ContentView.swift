@@ -17,7 +17,15 @@ struct ContentView: View {
             
             VStack {
                 HStack {
-                    CaptureCancelButton()
+                    if case .detecting = viewModel.session.state {
+                        CaptureCancelButton {
+                            viewModel.reset()
+                        }
+                    } else if case .capturing = viewModel.session.state {
+                        CaptureCancelButton {
+                            viewModel.reset()
+                        }
+                    }
                     Spacer()
                 }
                 .padding()
@@ -31,17 +39,21 @@ struct ContentView: View {
                 if !viewModel.processingMessage.isEmpty {
                     ProcessingMessageView(message: viewModel.processingMessage)
                 }
-
+                
                 // 캡처 버튼
-                CaptureButton(
-                    session: viewModel.session,
-                    hasDetectionFailed: $viewModel.hasDetectionFailed,
-                    showProcessButton: viewModel.showProcessButton,
-                    onContinue: { viewModel.startDetecting() },
-                    onStartCapture: { viewModel.startCapturing() },
-                    onFinishCapture: { viewModel.finishCapturing() },
-                    onProcess: { viewModel.startReconstruction() }
-                )
+                if case .capturing = viewModel.session.state {
+                    
+                } else {
+                    CaptureButton(
+                        session: viewModel.session,
+                        hasDetectionFailed: $viewModel.hasDetectionFailed,
+                        showProcessButton: viewModel.showProcessButton,
+                        onContinue: { viewModel.startDetecting() },
+                        onStartCapture: { viewModel.startCapturing() },
+                        onFinishCapture: { viewModel.finishCapturing() },
+                        onProcess: { viewModel.startReconstruction() }
+                    )
+                }
             }
         }
         .onAppear {
@@ -74,10 +86,10 @@ struct ProcessingMessageView: View {
 }
 
 private struct CaptureCancelButton: View {
+    let action: () -> Void
+    
     var body: some View {
-        Button(action: {
-            
-        }, label: {
+        Button(action: action, label: {
             Text("Cancel")
                 .padding(16.0)
                 .font(.subheadline)
@@ -90,4 +102,3 @@ private struct CaptureCancelButton: View {
         })
     }
 }
-
