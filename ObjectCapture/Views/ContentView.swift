@@ -16,6 +16,15 @@ struct ContentView: View {
             ObjectCaptureView(session: viewModel.session)
             
             VStack {
+                HStack {
+                    CaptureCancelButton()
+                    Spacer()
+                }
+                .padding()
+                Spacer()
+            }
+            
+            VStack {
                 Spacer()
                 
                 // 처리 상태 메시지
@@ -63,3 +72,22 @@ struct ProcessingMessageView: View {
             .padding(.bottom, 20)
     }
 }
+
+private struct CaptureCancelButton: View {
+    var body: some View {
+        Button(action: {
+            
+        }, label: {
+            Text("Cancel")
+                .padding(16.0)
+                .font(.subheadline)
+                .bold()
+                .foregroundColor(.white)
+                .background(.ultraThinMaterial)
+                .environment(\.colorScheme, .dark)
+                .cornerRadius(15)
+                .multilineTextAlignment(.center)
+        })
+    }
+}
+
