@@ -10,10 +10,12 @@ import SwiftData
 
 @main
 struct ObjectCaptureApp: App {
+    @State private var appModel = AppDataModel()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(appModel)
         }
     }
 }

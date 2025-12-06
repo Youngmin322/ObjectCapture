@@ -7,212 +7,117 @@
 
 import SwiftUI
 import RealityKit
-import QuickLook
 
 struct ContentView: View {
-    @State private var session = ObjectCaptureSession()
-    @State private var isCapturing = false
-    @State private var showProcessButton = false
-    @State private var processingMessage = ""
-    @State private var showModelView = false
-    @State private var modelURL: URL?
+    @State private var viewModel = CaptureViewModel()
 
     var body: some View {
         ZStack {
-            ObjectCaptureView(session: session)
+            ObjectCaptureView(session: viewModel.session)
             
             VStack {
                 Spacer()
                 
-                if !processingMessage.isEmpty {
-                    Text(processingMessage)
-                        .font(.headline)
-                        .padding()
-                        .background(.black.opacity(0.7))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .padding(.bottom, 20)
+                // 처리 상태 메시지
+                if !viewModel.processingMessage.isEmpty {
+                    ProcessingMessageView(message: viewModel.processingMessage)
                 }
 
-                // 버튼 영역
-                if showProcessButton {
-                    Button(action: {
-                        startReconstruction()
-                    }) {
-                        Text("3D 모델 만들기")
-                            .font(.title3).bold()
-                            .padding().frame(maxWidth: .infinity)
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(15)
-                    }
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 50)
-                    
-                } else if case .ready = session.state {
-                    // Continue 버튼
-                    Button(action: {
-                        session.startDetecting()
-                    }) {
-                        Text("Continue")
-                            .font(.title3).bold() 
-                            .padding().frame(maxWidth: .infinity)
-                            .background(Color.orange)
-                            .foregroundColor(.white)
-                            .cornerRadius(15)
-                    }
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 50)
-                    
-                } else if case .detecting = session.state {
-                    // 감지 완료 후 촬영 시작 버튼
-                    Button(action: {
-                        session.startCapturing()
-                        isCapturing = true
-                        print("촬영 시작")
-                    }) {
-                        Text("촬영 시작")
-                            .font(.title3).bold()
-                            .padding().frame(maxWidth: .infinity)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(15)
-                    }
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 50)
-                    
-                } else if case .capturing = session.state {
-                    // 촬영 중//
-                    Button(action: {
-                        session.finish()
-                        isCapturing = false
-                        showProcessButton = true
-                        print("촬영 종료")
-                    }) {
-                        Text("촬영 완료")
-                            .font(.title3).bold()
-                            .padding().frame(maxWidth: .infinity)
-                            .background(Color.red)
-                            .foregroundColor(.white)
-                            .cornerRadius(15)
-                    }
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 50)
-                }
+                // 캡처 버튼
+                CaptureButton(
+                    session: viewModel.session,
+                    hasDetectionFailed: $viewModel.hasDetectionFailed,
+                    showProcessButton: viewModel.showProcessButton,
+                    onContinue: { viewModel.startDetecting() },
+                    onStartCapture: { viewModel.startCapturing() },
+                    onFinishCapture: { viewModel.finishCapturing() },
+                    onProcess: { viewModel.startReconstruction() }
+                )
             }
         }
         .onAppear {
-            setupSession()
+            viewModel.setupSession()
         }
-        .sheet(isPresented: $showModelView) {
-            if let url = modelURL {
+        .sheet(isPresented: $viewModel.showModelView) {
+            if let url = viewModel.modelURL {
                 ARQuickLookView(modelFile: url) {
                     print("뷰어 닫힘")
-                    showProcessButton = false
-                    processingMessage = ""
-                    isCapturing = false
-                    setupSession()
-                }
-            }
-        }
-    }
-    
-    func setupSession() {
-        guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
-        let scansFolder = documentsPath.appendingPathComponent("Scans")
-        
-        if FileManager.default.fileExists(atPath: scansFolder.path) {
-            try? FileManager.default.removeItem(at: scansFolder)
-        }
-        try? FileManager.default.createDirectory(at: scansFolder, withIntermediateDirectories: true)
-        
-        var config = ObjectCaptureSession.Configuration()
-        config.isOverCaptureEnabled = true
-        
-        session.start(imagesDirectory: scansFolder, configuration: config)
-    }
-    
-    func startReconstruction() {
-        processingMessage = "변환 준비 중..."
-        
-        guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
-        let inputFolder = documentsPath.appendingPathComponent("Scans")
-        let outputFile = documentsPath.appendingPathComponent("MyModel.usdz")
-        
-        Task {
-            do {
-                let photoSession = try PhotogrammetrySession(input: inputFolder)
-                try photoSession.process(requests: [.modelFile(url: outputFile)])
-                
-                for try await output in photoSession.outputs {
-                    switch output {
-                    case .requestProgress(_, let fraction):
-                        await MainActor.run {
-                            processingMessage = "변환 중... \(Int(fraction * 100))%"
-                        }
-                        
-                    case .processingComplete:
-                        await MainActor.run {
-                            processingMessage = "완성 (MyModel.usdz)"
-                            modelURL = outputFile
-                            showModelView = true
-                        }
-                        print("성공 파일 위치: \(outputFile)")
-                        
-                    case .requestError(_, let error):
-                        await MainActor.run {
-                            processingMessage = "오류 발생: \(error)"
-                        }
-                        print("Error: \(error)")
-                        
-                    default:
-                        break
-                    }
-                }
-            } catch {
-                print("3D 변환 실패: \(error)")
-                await MainActor.run {
-                    processingMessage = "변환 실패: \(error.localizedDescription)"
+                    viewModel.reset()
                 }
             }
         }
     }
 }
 
-struct ARQuickLookView: UIViewControllerRepresentable {
-    var modelFile: URL
-    var endCaptureCallback: () -> Void
+// MARK: - Processing Message Component
+struct ProcessingMessageView: View {
+    let message: String
     
-    func makeUIViewController(context: Context) -> QLPreviewController {
-        let controller = QLPreviewController()
-        controller.dataSource = context.coordinator
-        controller.delegate = context.coordinator
-        return controller
+    var body: some View {
+        Text(message)
+            .font(.headline)
+            .padding()
+            .background(.black.opacity(0.7))
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .padding(.bottom, 20)
     }
-    
-    func updateUIViewController(_ uiViewController: QLPreviewController, context: Context) {}
+}
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator(parent: self)
-    }
 
-    class Coordinator: NSObject, QLPreviewControllerDataSource, QLPreviewControllerDelegate {
-        let parent: ARQuickLookView
-
-        init(parent: ARQuickLookView) {
-            self.parent = parent
-        }
-
-        func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
-            return 1
-        }
-
-        func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
-            return parent.modelFile as QLPreviewItem
-        }
-        
-        func previewControllerDidDismiss(_ controller: QLPreviewController) {
-            parent.endCaptureCallback()
+#Preview("ContentView - 기본") {
+    // 프리뷰용 더미 배경 뷰로 ObjectCaptureView 대체
+    struct DummyCaptureBackground: View {
+        var body: some View {
+            ZStack {
+                Color.black.opacity(0.9)
+                Text("Object Capture Preview")
+                    .foregroundColor(.white.opacity(0.7))
+                    .font(.headline)
+            }
+            .ignoresSafeArea()
         }
     }
+
+    // 프리뷰 전용 컨테이너로 ViewModel을 설정
+    struct ContentViewPreviewContainer: View {
+        @State private var viewModel = CaptureViewModel()
+
+        var body: some View {
+            ZStack {
+                // 실제 캡처 뷰 대신 더미 배경
+                DummyCaptureBackground()
+
+                VStack {
+                    Spacer()
+
+                    // 메시지 표시 예시
+                    if !viewModel.processingMessage.isEmpty {
+                        ProcessingMessageView(message: viewModel.processingMessage)
+                    }
+
+                    // 캡처 버튼 (실제 세션을 사용하지만 프리뷰에서는 액션을 로그로만 처리)
+                    CaptureButton(
+                        session: viewModel.session,
+                        hasDetectionFailed: $viewModel.hasDetectionFailed,
+                        showProcessButton: viewModel.showProcessButton,
+                        onContinue: { print("Continue tapped (Preview)") },
+                        onStartCapture: { print("Start Capture tapped (Preview)") },
+                        onFinishCapture: { print("Finish Capture tapped (Preview)") },
+                        onProcess: { print("Process tapped (Preview)") }
+                    )
+                }
+            }
+            // 프리뷰에서는 실제 세션 시작을 막고, UI 확인용 더미 상태를 세팅
+            .task {
+                // 메시지/버튼 노출 상태를 보기 위한 더미 값
+                viewModel.processingMessage = "변환 중... 35%"
+                viewModel.showProcessButton = false
+            }
+        }
+    }
+
+    return ContentViewPreviewContainer()
+        // AppDataModel 환경 주입 (필수)
+        .environment(AppDataModel())
 }
