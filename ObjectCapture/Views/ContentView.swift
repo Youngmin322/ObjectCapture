@@ -10,11 +10,11 @@ import RealityKit
 
 struct ContentView: View {
     @State private var viewModel = CaptureViewModel()
-
+    
     var body: some View {
         ZStack {
             ObjectCaptureView(session: viewModel.session)
-            
+
             VStack {
                 HStack {
                     if case .detecting = viewModel.session.state {
@@ -45,8 +45,8 @@ struct ContentView: View {
                     
                 } else {
                     CaptureButton(
-                        session: viewModel.session,
                         hasDetectionFailed: $viewModel.hasDetectionFailed,
+                        session: viewModel.session,
                         showProcessButton: viewModel.showProcessButton,
                         onContinue: { viewModel.startDetecting() },
                         onStartCapture: { viewModel.startCapturing() },

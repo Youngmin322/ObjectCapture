@@ -35,7 +35,7 @@ class CaptureViewModel {
     
     // MARK: - Capture Control
     func startDetecting() {
-        session.startDetecting()
+        _ = session.startDetecting()
     }
     
     func startCapturing() {

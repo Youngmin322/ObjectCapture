@@ -10,9 +10,8 @@ import RealityKit
 
 struct CaptureButton: View {
     @Environment(AppDataModel.self) var appModel
-    var session: ObjectCaptureSession
     @Binding var hasDetectionFailed: Bool
-    
+    var session: ObjectCaptureSession
     let showProcessButton: Bool
     let onContinue: () -> Void 
     let onStartCapture: () -> Void
