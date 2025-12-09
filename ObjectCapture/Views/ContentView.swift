@@ -70,7 +70,6 @@ struct ContentView: View {
                         HStack {
                             Spacer()
                             CaptureButton(
-                                hasDetectionFailed: $viewModel.hasDetectionFailed,
                                 session: viewModel.session,
                                 showProcessButton: viewModel.showProcessButton,
                                 onContinue: { viewModel.startDetecting() },
@@ -81,7 +80,6 @@ struct ContentView: View {
                         }
                     } else {
                         CaptureButton(
-                            hasDetectionFailed: $viewModel.hasDetectionFailed,
                             session: viewModel.session,
                             showProcessButton: viewModel.showProcessButton,
                             onContinue: { viewModel.startDetecting() },

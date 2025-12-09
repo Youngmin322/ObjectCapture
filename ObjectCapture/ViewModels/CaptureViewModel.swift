@@ -15,7 +15,6 @@ class CaptureViewModel {
     var session = ObjectCaptureSession()
     var isCapturing = false
     var showProcessButton = false
-    var hasDetectionFailed: Bool = false
     var processingMessage = ""
     var showModelView = false
     var modelURL: URL?

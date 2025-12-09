@@ -10,7 +10,6 @@ import RealityKit
 
 struct CaptureButton: View {
     @Environment(AppDataModel.self) var appModel
-    @Binding var hasDetectionFailed: Bool
     var session: ObjectCaptureSession
     let showProcessButton: Bool
     let onContinue: () -> Void
@@ -63,27 +62,5 @@ struct CaptureButton: View {
         default:
             break
         }
-    }
-}
-
-// MARK: - Action Button Component
-struct ActionButton: View {
-    let title: String
-    let backgroundColor: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.body)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(.horizontal, 25)
-                .padding(.vertical, 20)
-                .background(.blue)
-                .clipShape(Capsule())
-        }
-        .padding(.horizontal, 40)
-        .padding(.bottom, 50)
     }
 }
