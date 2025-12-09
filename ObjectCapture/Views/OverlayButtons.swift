@@ -13,7 +13,7 @@ struct CaptureButton: View {
     @Binding var hasDetectionFailed: Bool
     var session: ObjectCaptureSession
     let showProcessButton: Bool
-    let onContinue: () -> Void 
+    let onContinue: () -> Void
     let onStartCapture: () -> Void
     let onFinishCapture: () -> Void
     let onProcess: () -> Void
@@ -24,44 +24,44 @@ struct CaptureButton: View {
                 performAction()
             },
             label: {
-                Text(buttonLabel)
-                    .font(.body)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 25)
-                    .padding(.vertical, 20)
-                    .background(.blue)
-                    .clipShape(Capsule())
+                if let label = buttonLabel {
+                    Text(label)
+                        .font(.body)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 25)
+                        .padding(.vertical, 20)
+                        .background(.blue)
+                        .clipShape(Capsule())
+                }
             })
     }
 
-    private var buttonLabel: String {
-        if session.state == .ready {
-            switch appModel.captureMode {
-                case .object:
-                    return "Continue"
-                case .area:
-                    return "Start Capture"
-            }
-        } else {
-            if !appModel.isObjectFlipped {
-                return "Start Capture"
-            } else {
-                return "Continue"
-            }
+    private var buttonLabel: String? {
+        switch session.state {
+        case .ready:
+            return appModel.captureMode == .object ? "Continue" : "Start Capture"
+        case .detecting:
+            return "Start Capture"
+        case .capturing:
+            return nil
+        default:
+            return nil
         }
     }
 
     private func performAction() {
-        if session.state == .ready {
-            switch appModel.captureMode {
-            case .object:
-                hasDetectionFailed = !(session.startDetecting())
-            case .area:
-                session.startCapturing()
+        switch session.state {
+        case .ready:
+            if appModel.captureMode == .object {
+                onContinue()
+            } else {
+                onStartCapture()
             }
-        } else if case .detecting = session.state {
-            session.startCapturing()
+        case .detecting:
+            onStartCapture()
+        default:
+            break
         }
     }
 }

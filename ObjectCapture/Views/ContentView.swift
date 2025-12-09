@@ -66,7 +66,19 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
                     if case .capturing = viewModel.session.state {
-                        
+                        // 촬영 중일 때 오른쪽 하단에 버튼 표시
+                        HStack {
+                            Spacer()
+                            CaptureButton(
+                                hasDetectionFailed: $viewModel.hasDetectionFailed,
+                                session: viewModel.session,
+                                showProcessButton: viewModel.showProcessButton,
+                                onContinue: { viewModel.startDetecting() },
+                                onStartCapture: { viewModel.startCapturing() },
+                                onFinishCapture: { viewModel.finishCapturing() },
+                                onProcess: { viewModel.startReconstruction() }
+                            )
+                        }
                     } else {
                         CaptureButton(
                             hasDetectionFailed: $viewModel.hasDetectionFailed,
@@ -149,7 +161,3 @@ struct CaptureProgressView: View {
         }
     }
 }
-
-//#Preview {
-//    CaptureProgressView(session: numberOfShotsTaken)
-//}
