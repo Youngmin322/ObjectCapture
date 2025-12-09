@@ -20,6 +20,9 @@ class CaptureViewModel {
     var showModelView = false
     var modelURL: URL?
     
+    var currentImageCount = 0
+    var totalImageCount = 0
+    
     private let fileManager = FileManagerService()
     
     // MARK: - Session Setup
@@ -31,6 +34,29 @@ class CaptureViewModel {
         config.isOverCaptureEnabled = true
         
         session.start(imagesDirectory: scansFolder, configuration: config)
+        
+        startMoitoringCapture()
+    }
+    
+    private func startMoitoringCapture() {
+        Task {
+            for await state in session.stateUpdates {
+                updateCaptureProgress(state)
+            }
+        }
+    }
+    
+    private func updateCaptureProgress(_ state: ObjectCaptureSession.CaptureState) {
+        switch state {
+        case .capturing:
+            currentImageCount = session.numberOfShotsTaken
+            totalImageCount = session.maximumNumberOfInputImages
+        case .finishing:
+            currentImageCount = session.numberOfShotsTaken
+            totalImageCount = session.numberOfShotsTaken
+        default:
+            break
+        }
     }
     
     // MARK: - Capture Control

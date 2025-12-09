@@ -14,7 +14,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             ObjectCaptureView(session: viewModel.session)
-
+            
             VStack {
                 HStack {
                     if case .detecting = viewModel.session.state {
@@ -35,25 +35,58 @@ struct ContentView: View {
             VStack {
                 Spacer()
                 
-                // 처리 상태 메시지
-                if !viewModel.processingMessage.isEmpty {
-                    ProcessingMessageView(message: viewModel.processingMessage)
-                }
-                
-                // 캡처 버튼
-                if case .capturing = viewModel.session.state {
+                HStack {
+                    HStack {
+                        if case .capturing = viewModel.session.state {
+                            CaptureProgressView(
+                                current: viewModel.currentImageCount,
+                                total: viewModel.totalImageCount
+                            )
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 20)
                     
-                } else {
-                    CaptureButton(
-                        hasDetectionFailed: $viewModel.hasDetectionFailed,
-                        session: viewModel.session,
-                        showProcessButton: viewModel.showProcessButton,
-                        onContinue: { viewModel.startDetecting() },
-                        onStartCapture: { viewModel.startCapturing() },
-                        onFinishCapture: { viewModel.finishCapturing() },
-                        onProcess: { viewModel.startReconstruction() }
-                    )
+                    Spacer()
+                        .frame(width: 200)
+                    
+                    HStack { }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
+                .padding(.bottom, 80)
+            }
+            
+            // 처리 상태 메시지
+            if !viewModel.processingMessage.isEmpty {
+                ProcessingMessageView(message: viewModel.processingMessage)
+            }
+            
+            VStack {
+                Spacer()
+                
+                HStack {
+                    HStack { }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    if case .capturing = viewModel.session.state {
+                        
+                    } else {
+                        CaptureButton(
+                            hasDetectionFailed: $viewModel.hasDetectionFailed,
+                            session: viewModel.session,
+                            showProcessButton: viewModel.showProcessButton,
+                            onContinue: { viewModel.startDetecting() },
+                            onStartCapture: { viewModel.startCapturing() },
+                            onFinishCapture: { viewModel.finishCapturing() },
+                            onProcess: { viewModel.startReconstruction() }
+                        )
+                        .frame(width: 200)
+                    }
+                    
+                    HStack { }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .padding(.bottom, 40)
             }
         }
         .onAppear {
@@ -69,6 +102,7 @@ struct ContentView: View {
         }
     }
 }
+
 
 // MARK: - Processing Message Component
 struct ProcessingMessageView: View {
@@ -101,4 +135,24 @@ private struct CaptureCancelButton: View {
                 .multilineTextAlignment(.center)
         })
     }
+}
+
+struct CaptureProgressView: View {
+    let current: Int
+    let total: Int
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: "photo")
+                .foregroundColor(.white)
+            
+            Text("\(current)/\(total)")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.white)
+        }
+    }
+}
+
+#Preview {
+    CaptureProgressView(current: 10, total: 200)
 }
