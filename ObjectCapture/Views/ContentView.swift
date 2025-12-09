@@ -38,10 +38,7 @@ struct ContentView: View {
                 HStack {
                     HStack {
                         if case .capturing = viewModel.session.state {
-                            CaptureProgressView(
-                                current: viewModel.currentImageCount,
-                                total: viewModel.totalImageCount
-                            )
+                            CaptureProgressView(session: viewModel.session)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -138,21 +135,21 @@ private struct CaptureCancelButton: View {
 }
 
 struct CaptureProgressView: View {
-    let current: Int
-    let total: Int
+    
+    var session: ObjectCaptureSession
     
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: "photo")
                 .foregroundColor(.white)
             
-            Text("\(current)/\(total)")
+            Text("\(session.numberOfShotsTaken)/\(session.maximumNumberOfInputImages)")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white)
         }
     }
 }
 
-#Preview {
-    CaptureProgressView(current: 10, total: 200)
-}
+//#Preview {
+//    CaptureProgressView(session: numberOfShotsTaken)
+//}
