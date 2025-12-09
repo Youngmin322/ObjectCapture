@@ -14,7 +14,7 @@ struct FileManagerService {
     func getDocumentsDirectory() -> URL {
         fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
-     
+    
     func getScansDirectory() -> URL {
         getDocumentsDirectory().appendingPathComponent("Scans")
     }

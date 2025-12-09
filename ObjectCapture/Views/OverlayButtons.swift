@@ -17,7 +17,7 @@ struct CaptureButton: View {
     let onStartCapture: () -> Void
     let onFinishCapture: () -> Void
     let onProcess: () -> Void
-
+    
     var body: some View {
         Button(
             action: {
@@ -36,7 +36,7 @@ struct CaptureButton: View {
                 }
             })
     }
-
+    
     private var buttonLabel: String? {
         switch session.state {
         case .ready:
@@ -49,7 +49,7 @@ struct CaptureButton: View {
             return nil
         }
     }
-
+    
     private func performAction() {
         switch session.state {
         case .ready:
