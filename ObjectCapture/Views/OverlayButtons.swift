@@ -36,6 +36,25 @@ struct CaptureButton: View {
             })
     }
     
+    struct CaptureCancelButton: View {
+        let action: () -> Void
+        
+        var body: some View {
+            Button(action: action, label: {
+                Text("Cancel")
+                    .padding(16.0)
+                    .font(.subheadline)
+                    .bold()
+                    .foregroundColor(.white)
+                    .background(.ultraThinMaterial)
+                    .environment(\.colorScheme, .dark)
+                    .cornerRadius(15)
+                    .multilineTextAlignment(.center)
+            })
+        }
+    }
+    
+    
     private var buttonLabel: String? {
         switch session.state {
         case .ready:
