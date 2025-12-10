@@ -18,11 +18,11 @@ struct ContentView: View {
             VStack {
                 HStack {
                     if case .detecting = viewModel.session.state {
-                        CaptureButton.CaptureCancelButton {
+                        CaptureCancelButton {
                             viewModel.reset()
                         }
                     } else if case .capturing = viewModel.session.state {
-                        CaptureButton.CaptureCancelButton {
+                        CaptureCancelButton {
                             viewModel.reset()
                         }
                     }
