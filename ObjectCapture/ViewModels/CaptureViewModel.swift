@@ -18,6 +18,7 @@ class CaptureViewModel {
     var processingMessage = ""
     var showModelView = false
     var modelURL: URL?
+    var showOverlaySheets = false
     
     var currentImageCount = 0
     var totalImageCount = 0
@@ -95,6 +96,20 @@ class CaptureViewModel {
                 print("3D 변환 실패: \(error)")
                 processingMessage = "변환 실패: \(error.localizedDescription)"
             }
+        }
+    }
+    
+    func setShowOverlaySheets(to shown: Bool) {
+        guard shown != showOverlaySheets else { return }
+        
+        if shown {
+            showOverlaySheets = true
+            session.pause()
+            print("세션 일시정지")
+        } else {
+            session.resume()
+            showOverlaySheets = false
+            print("세션 재개")
         }
     }
     

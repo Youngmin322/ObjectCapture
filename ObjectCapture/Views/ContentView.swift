@@ -10,6 +10,7 @@ import RealityKit
 
 struct ContentView: View {
     @State private var viewModel = CaptureViewModel()
+    @State private var showOnboardingView = false
     
     var body: some View {
         ZStack {
@@ -27,6 +28,18 @@ struct ContentView: View {
                         }
                     }
                     Spacer()
+                    
+                    if case .capturing = viewModel.session.state {
+                        NextButton(
+                            action: {
+                                print("Next button clicked!")
+                                showOnboardingView = true
+                            },
+                            session: viewModel.session,
+                            onShowSheet: { viewModel.setShowOverlaySheets(to: true) },
+                            onHideSheet: { viewModel.setShowOverlaySheets(to: false) }
+                        )
+                    }
                 }
                 .padding()
                 Spacer()
@@ -107,6 +120,26 @@ struct ContentView: View {
                 }
             }
         }
+        .sheet(isPresented: $showOnboardingView) {
+            OnboardingReviewView(
+                session: viewModel.session,
+                showOnboardingView: $showOnboardingView
+            )
+        }
+        .onChange(of: showOnboardingView) { oldValue, newValue in
+            if newValue {
+                viewModel.setShowOverlaySheets(to: true)
+            } else {
+                viewModel.setShowOverlaySheets(to: false)
+            }
+        }
+        .task {
+            // 스캔 패스 완료 시 자동으로 시트 띄우기
+            for await userCompletedScanPass in viewModel.session.userCompletedScanPassUpdates where userCompletedScanPass {
+                print("Scan pass completed! Showing review...")
+                showOnboardingView = true
+            }
+        }
     }
 }
 
@@ -127,8 +160,8 @@ struct ProcessingMessageView: View {
 }
 
 
+// MARK: - Capture Progress Component
 struct CaptureProgressView: View {
-    
     var session: ObjectCaptureSession
     
     var body: some View {
@@ -140,5 +173,50 @@ struct CaptureProgressView: View {
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white)
         }
+    }
+}
+
+
+// MARK: - Onboarding Review View
+struct OnboardingReviewView: View {
+    var session: ObjectCaptureSession
+    @Binding var showOnboardingView: Bool
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("촬영 진행 상황")
+                .font(.largeTitle)
+                .bold()
+            
+            Text("촬영한 사진: \(session.numberOfShotsTaken)장")
+                .font(.headline)
+            
+            Divider()
+            
+            VStack(spacing: 15) {
+                Button("계속 촬영하기 (Continue)") {
+                    showOnboardingView = false
+                }
+                .font(.headline)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(15)
+                
+                Button("촬영 완료 (Finish)") {
+                    session.finish()
+                    showOnboardingView = false
+                }
+                .font(.headline)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.gray)
+                .foregroundColor(.white)
+                .cornerRadius(15)
+            }
+            .padding()
+        }
+        .padding()
     }
 }
