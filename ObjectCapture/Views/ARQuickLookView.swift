@@ -20,22 +20,22 @@ struct ARQuickLookView: UIViewControllerRepresentable {
     }
     
     func updateUIViewController(_ uiViewController: QLPreviewController, context: Context) {}
-
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
     }
-
+    
     class Coordinator: NSObject, QLPreviewControllerDataSource, QLPreviewControllerDelegate {
         let parent: ARQuickLookView
-
+        
         init(parent: ARQuickLookView) {
             self.parent = parent
         }
-
+        
         func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
             return 1
         }
-
+        
         func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
             return parent.modelFile as QLPreviewItem
         }
