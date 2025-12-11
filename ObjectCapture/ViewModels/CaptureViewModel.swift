@@ -24,6 +24,7 @@ class CaptureViewModel {
     var totalImageCount = 0
     
     private let fileManager = FileManagerService()
+    private var stateMonitorTask: Task<Void, Never>?
     
     // MARK: - Session Setup
     func setupSession() {
@@ -35,11 +36,12 @@ class CaptureViewModel {
         
         session.start(imagesDirectory: scansFolder, configuration: config)
         
-        startMoitoringCapture()
+        startMonitoringCapture()
     }
     
-    private func startMoitoringCapture() {
-        Task {
+    private func startMonitoringCapture() {
+        stateMonitorTask?.cancel()
+        stateMonitorTask = Task {
             for await state in session.stateUpdates {
                 updateCaptureProgress(state)
             }
@@ -61,25 +63,41 @@ class CaptureViewModel {
     
     // MARK: - Capture Control
     func startDetecting() {
-        _ = session.startDetecting()
+        let success = session.startDetecting()
+        print("Start detecting: \(success)")
     }
     
     func startCapturing() {
         session.startCapturing()
         isCapturing = true
-        print("촬영 시작")
+        print("Capture started")
     }
     
     func finishCapturing() {
         session.finish()
         isCapturing = false
         showProcessButton = true
-        print("촬영 종료")
+        print("Capture finished")
+    }
+    
+    // MARK: - Sheet Management
+    func setShowOverlaySheets(to shown: Bool) {
+        guard shown != showOverlaySheets else { return }
+        
+        if shown {
+            showOverlaySheets = true
+            session.pause()
+            print("Session paused")
+        } else {
+            session.resume()
+            showOverlaySheets = false
+            print("Session resumed")
+        }
     }
     
     // MARK: - 3D Reconstruction
     func startReconstruction() {
-        processingMessage = "변환 준비 중..."
+        processingMessage = "Preparing reconstruction..."
         
         let inputFolder = fileManager.getScansDirectory()
         let outputFile = fileManager.getModelOutputPath()
@@ -93,40 +111,26 @@ class CaptureViewModel {
                     await handleReconstructionOutput(output, outputFile: outputFile)
                 }
             } catch {
-                print("3D 변환 실패: \(error)")
-                processingMessage = "변환 실패: \(error.localizedDescription)"
+                print("Reconstruction failed: \(error)")
+                processingMessage = "Reconstruction failed: \(error.localizedDescription)"
             }
-        }
-    }
-    
-    func setShowOverlaySheets(to shown: Bool) {
-        guard shown != showOverlaySheets else { return }
-        
-        if shown {
-            showOverlaySheets = true
-            session.pause()
-            print("세션 일시정지")
-        } else {
-            session.resume()
-            showOverlaySheets = false
-            print("세션 재개")
         }
     }
     
     private func handleReconstructionOutput(_ output: PhotogrammetrySession.Output, outputFile: URL) async {
         switch output {
         case .requestProgress(_, let fraction):
-            processingMessage = "변환 중... \(Int(fraction * 100))%"
+            processingMessage = "Processing... \(Int(fraction * 100))%"
             
         case .processingComplete:
-            processingMessage = "완성 (MyModel.usdz)"
+            processingMessage = "Complete! (MyModel.usdz)"
             modelURL = outputFile
             showModelView = true
-            print("성공 파일 위치: \(outputFile)")
+            print("Model created: \(outputFile)")
             
         case .requestError(_, let error):
-            processingMessage = "오류 발생: \(error)"
-            print("Error: \(error)")
+            processingMessage = "Error: \(error.localizedDescription)"
+            print("Reconstruction error: \(error)")
             
         default:
             break
@@ -135,9 +139,11 @@ class CaptureViewModel {
     
     // MARK: - Reset
     func reset() {
+        stateMonitorTask?.cancel()
         showProcessButton = false
         processingMessage = ""
         isCapturing = false
+        showOverlaySheets = false
         setupSession()
     }
 }
