@@ -12,9 +12,11 @@ import RealityKit
 @Observable
 class CaptureViewModel {
     // MARK: - Properties
+    
     var session = ObjectCaptureSession()
     var isCapturing = false
     var showProcessButton = false
+    var hasDetectionFailed = false
     var processingMessage = ""
     var showModelView = false
     var modelURL: URL?
@@ -23,8 +25,11 @@ class CaptureViewModel {
     var currentImageCount = 0
     var totalImageCount = 0
     
+    var appModel: AppDataModel!
+    
     private let fileManager = FileManagerService()
     private var stateMonitorTask: Task<Void, Never>?
+    
     
     // MARK: - Session Setup
     func setupSession() {
@@ -32,11 +37,24 @@ class CaptureViewModel {
         fileManager.clearDirectory(scansFolder)
         
         var config = ObjectCaptureSession.Configuration()
-        config.isOverCaptureEnabled = true
+        config.isOverCaptureEnabled = (appModel.captureMode == .object)
         
         session.start(imagesDirectory: scansFolder, configuration: config)
         
         startMonitoringCapture()
+    }
+    
+    private func performAction() {
+        if session.state == .ready {
+            switch appModel.captureMode {
+            case .object:
+                hasDetectionFailed = !(session.startDetecting())
+            case .area:
+                session.startCapturing()
+            }
+        } else if case .detecting = session.state {
+            session.startCapturing()
+        }
     }
     
     private func startMonitoringCapture() {
@@ -78,6 +96,11 @@ class CaptureViewModel {
         isCapturing = false
         showProcessButton = true
         print("Capture finished")
+    }
+    
+    func toggleCaptureMode() {
+        appModel.captureMode = appModel.captureMode.nextMode
+        reset()
     }
     
     // MARK: - Sheet Management
@@ -140,9 +163,13 @@ class CaptureViewModel {
     // MARK: - Reset
     func reset() {
         stateMonitorTask?.cancel()
+        
+        session = ObjectCaptureSession()
+        
         showProcessButton = false
         processingMessage = ""
         isCapturing = false
+        hasDetectionFailed = false
         showOverlaySheets = false
         setupSession()
     }
