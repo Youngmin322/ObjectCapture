@@ -53,9 +53,7 @@ struct ContentView: View {
                     
                     HStack {
                         HStack {
-                            if case .capturing = viewModel.session.state {
-                                CaptureProgressView(session: viewModel.session)
-                            }
+
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.leading, 20)
@@ -77,11 +75,14 @@ struct ContentView: View {
                     Spacer()
                                         
                     HStack {
-                        HStack { }
+                        HStack {
+                            CaptureProgressView(session: viewModel.session)
+                        }
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
                         
                         if case .capturing = viewModel.session.state {
-                            HStack {
+                            HStack { 
                                 Spacer()
                                 CaptureButton(
                                     session: viewModel.session,
