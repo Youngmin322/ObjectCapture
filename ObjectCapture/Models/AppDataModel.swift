@@ -15,6 +15,20 @@ class AppDataModel {
     enum CaptureMode: Equatable {
         case object
         case area
+        
+        var displayName: String {
+            switch self {
+            case .object: return "Object"
+            case .area: return "Area"
+            }
+        }
+        
+        var nextMode: CaptureMode {
+            switch self {
+            case .object: return .area
+            case .area: return .object
+            }
+        }
     }
     
     var captureMode: CaptureMode = .object
