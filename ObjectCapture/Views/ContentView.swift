@@ -76,7 +76,9 @@ struct ContentView: View {
                                         
                     HStack {
                         HStack {
-                            CaptureProgressView(session: viewModel.session)
+                            if case .capturing = viewModel.session.state {
+                                CaptureProgressView(session: viewModel.session)
+                            }
                         }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding()
