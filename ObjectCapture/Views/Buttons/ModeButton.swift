@@ -6,8 +6,6 @@
 //
 
 import SwiftUI
-import RealityKit
-import os
 
 struct ModeButton: View {
     @Environment(AppDataModel.self) var appModel
