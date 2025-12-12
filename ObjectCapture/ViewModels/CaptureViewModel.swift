@@ -13,17 +13,6 @@ import ComposableArchitecture
 @Observable
 class CaptureViewModel {
     // MARK: - Properties
-    var session = ObjectCaptureSession()
-    var isCapturing = false
-    var showProcessButton = false
-    var hasDetectionFailed = false
-    var processingMessage = ""
-    var showModelView = false
-    var modelURL: URL?
-    var showOverlaySheets = false
-    
-    var currentImageCount = 0
-    var totalImageCount = 0
     
     var appModel: Store<AppFeature.State, AppFeature.Action>!
     

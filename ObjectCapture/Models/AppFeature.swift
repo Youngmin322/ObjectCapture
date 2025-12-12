@@ -22,6 +22,15 @@ struct AppFeature {
         var hasIndicatedFlipObjectAnyway: Bool = false
         var tutorialPlayedOnce: Bool = false
         
+        var isCapturing = false
+        var showProcessButton = false
+        var hasDetectionFailed = false
+        var processingMessage = ""
+        var modelURL: URL?
+        var showOverlaySheets = false
+        var currentImageCount = 0
+        var totalImageCount = 0
+        
         // MARK: Nested Types
         enum CaptureMode: Equatable {
             case object
@@ -73,6 +82,21 @@ struct AppFeature {
         case resetState
         case setCurrentOrbit(State.Orbit)
         case flipObject
+        
+        case setupSession
+         case startDetecting
+         case startCapturing
+         case finishCapturing
+         case setShowOverlaySheets(Bool)
+         case startReconstruction
+         case reset
+         
+         // 세션 업데이트
+         case sessionStateChanged
+         case captureProgressUpdated(current: Int, total: Int)
+         case reconstructionProgressUpdated(Float)
+         case reconstructionCompleted(URL)
+         case reconstructionFailed(String)
     }
     
     // MARK: Reducer
