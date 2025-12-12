@@ -75,34 +75,7 @@ struct ContentView: View {
                 
                 VStack {
                     Spacer()
-                    
-                    HStack {
-                        HStack {
-                            Spacer()
-                            
-                            // Mode Toggle Button (Ready 상태에서만 표시)
-                            if viewModel.session.state == .ready {
-                                Button(action: {
-                                    viewModel.toggleCaptureMode()
-                                }) {
-                                    VStack(spacing: 4) {
-                                        Image(systemName: appModel.captureMode == .object ? "cube" : "circle.dashed")
-                                            .font(.system(size: 20))
-                                        Text(appModel.captureMode.displayName)
-                                            .font(.system(size: 12, weight: .semibold))
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(12)
-                                    .background(.ultraThinMaterial)
-                                    .environment(\.colorScheme, .dark)
-                                    .cornerRadius(15)
-                                }
-                                .padding(.trailing, 20)
-                            }
-                        }
-                        .padding(.bottom, 120)
-                    }
-                    
+                                        
                     HStack {
                         HStack { }
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -133,7 +106,9 @@ struct ContentView: View {
                             .frame(width: 200)
                         }
                         
-                        HStack { }
+                        HStack {
+                            ModeButton()
+                        }
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .padding(.bottom, 40)
