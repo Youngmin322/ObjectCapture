@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ModeButton: View {
     @Environment(AppDataModel.self) var appModel
-
+    
     var body: some View {
         Button(action: {
             switch appModel.captureMode {
@@ -32,7 +32,7 @@ struct ModeButton: View {
                 }
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 22)
-                .foregroundStyle(.white)
+                .foregroundColor(.white)
             }
             .padding(10)
             .contentShape(.rect)

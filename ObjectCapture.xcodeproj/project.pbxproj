@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		540E831D2EEBEEAE001CED27 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 540E831C2EEBEEAE001CED27 /* ComposableArchitecture */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		54EB1E452EDD63D100C7F374 /* ObjectCapture.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ObjectCapture.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				540E831D2EEBEEAE001CED27 /* ComposableArchitecture in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = ObjectCapture;
 			packageProductDependencies = (
+				540E831C2EEBEEAE001CED27 /* ComposableArchitecture */,
 			);
 			productName = ObjectCapture;
 			productReference = 54EB1E452EDD63D100C7F374 /* ObjectCapture.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = 54EB1E3C2EDD63D100C7F374;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				540E831B2EEBEEAE001CED27 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 54EB1E462EDD63D100C7F374 /* Products */;
 			projectDirPath = "";
@@ -334,6 +343,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		540E831B2EEBEEAE001CED27 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.23.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		540E831C2EEBEEAE001CED27 /* ComposableArchitecture */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 540E831B2EEBEEAE001CED27 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = ComposableArchitecture;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 54EB1E3D2EDD63D100C7F374 /* Project object */;
 }

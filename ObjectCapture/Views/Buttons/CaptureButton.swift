@@ -10,6 +10,7 @@ import RealityKit
 
 struct CaptureButton: View {
     @Environment(AppDataModel.self) var appModel
+    
     var session: ObjectCaptureSession
     let showProcessButton: Bool
     let onContinue: () -> Void
@@ -32,6 +33,7 @@ struct CaptureButton: View {
                         .padding(.vertical, 20)
                         .background(.blue)
                         .clipShape(Capsule())
+                        .glassEffect()
                 }
             })
     }

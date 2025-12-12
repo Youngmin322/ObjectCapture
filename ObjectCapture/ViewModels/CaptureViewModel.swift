@@ -12,7 +12,6 @@ import RealityKit
 @Observable
 class CaptureViewModel {
     // MARK: - Properties
-    
     var session = ObjectCaptureSession()
     var isCapturing = false
     var showProcessButton = false
