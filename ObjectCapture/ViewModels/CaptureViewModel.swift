@@ -7,6 +7,7 @@
 
 import SwiftUI
 import RealityKit
+import ComposableArchitecture
 
 @MainActor
 @Observable
@@ -24,7 +25,7 @@ class CaptureViewModel {
     var currentImageCount = 0
     var totalImageCount = 0
     
-    var appModel: AppDataModel!
+    var appModel: Store<AppFeature.State, AppFeature.Action>!
     
     private let fileManager = FileManagerService()
     private var stateMonitorTask: Task<Void, Never>?
@@ -98,7 +99,7 @@ class CaptureViewModel {
     }
     
     func toggleCaptureMode() {
-        appModel.captureMode = appModel.captureMode.nextMode
+        appModel.send(.toggleCaptureMode)
         reset()
     }
     

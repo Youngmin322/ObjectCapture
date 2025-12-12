@@ -7,9 +7,10 @@
 
 import SwiftUI
 import RealityKit
+import ComposableArchitecture
 
 struct ContentView: View {
-    @Environment(AppDataModel.self) var appModel
+    @Environment(Store<AppFeature.State, AppFeature.Action>.self) var store
     @State private var viewModel: CaptureViewModel? = nil
     @State private var showOnboardingView = false
     
@@ -147,7 +148,7 @@ struct ContentView: View {
         .onAppear {
             if viewModel == nil {
                 let vm = CaptureViewModel()
-                vm.appModel = appModel
+                vm.appModel = store
                 vm.setupSession()
                 viewModel = vm
             }
