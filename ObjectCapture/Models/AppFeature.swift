@@ -32,6 +32,9 @@ struct AppFeature {
         var currentImageCount = 0
         var totalImageCount = 0
         
+        var numberOfShotsTaken = 0
+        var maximumNumberOfInputImages = 100
+        
         // MARK: Nested Types
         enum CaptureMode: Equatable {
             case object
@@ -79,6 +82,8 @@ struct AppFeature {
     
     // MARK: Action
     enum Action {
+        case onAppear
+        
         case toggleCaptureMode
         case resetState
         case setCurrentOrbit(State.Orbit)
@@ -98,44 +103,109 @@ struct AppFeature {
         case reconstructionProgressUpdated(Float)
         case reconstructionCompleted(URL)
         case reconstructionFailed(String)
+        
+        // 세션 모니터링
+        case monitorSessionState
+        case sessionMaxImagesUpdated(Int)
     }
+    
+    
+    @Dependency(\.captureSession) var captureSession
+    @Dependency(\.fileManager) var fileManager
     
     // MARK: Reducer
     var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
+            case .onAppear:
+                return .send(.setupSession)
+                
             case .setupSession:
+                let scansFolder = fileManager.getScansDirectory()
+                fileManager.clearDirectory(scansFolder)
+                
+                var config = ObjectCaptureSession.Configuration()
+                config.isOverCaptureEnabled = (state.captureMode == .object)
+                
+                captureSession.start(scansFolder, config)
                 print("Setup session called")
+                
+                return .run { send in
+                    // 세션 상태 모니터링 시작
+                    await send(.monitorSessionState)
+                }
+                
+            case .monitorSessionState:
                 return .none
                 
             case .startDetecting:
-                print("start detecting called")
+                let success = captureSession.startDetecting()
+                state.hasDetectionFailed = !success
+                print("Start detecting: \(success)")
                 return .none
                 
             case .startCapturing:
+                captureSession.startCapturing()
                 state.isCapturing = true
+                print("Start capturing")
                 return .none
                 
             case .finishCapturing:
+                captureSession.finish()
                 state.isCapturing = false
                 state.showProcessButton = true
-                print("Finish Capturing")
+                print("Finish capturing")
                 return .none
                 
             case .setShowOverlaySheets(let show):
                 guard show != state.showOverlaySheets else { return .none }
                 state.showOverlaySheets = show
+                
+                if show {
+                    captureSession.pause()
+                    print("Session paused")
+                } else {
+                    captureSession.resume()
+                    print("Session resumed")
+                }
                 return .none
                 
             case .startReconstruction:
-                state.processingMessage = "Preparing reconstruction"
-                print("start reconstruction")
-                return .none
+                state.processingMessage = "Preparing reconstruction..."
+                print("Start reconstruction")
+                
+                let inputFolder = fileManager.getScansDirectory()
+                let outputFile = fileManager.getModelOutputPath()
+                
+                return .run { send in
+                    do {
+                        let photoSession = try PhotogrammetrySession(input: inputFolder)
+                        try photoSession.process(requests: [.modelFile(url: outputFile)])
+                        
+                        for try await output in photoSession.outputs {
+                            switch output {
+                            case .requestProgress(_, let fraction):
+                                await send(.reconstructionProgressUpdated(Float(fraction)))
+                                
+                            case .processingComplete:
+                                await send(.reconstructionCompleted(outputFile))
+                                
+                            case .requestError(_, let error):
+                                await send(.reconstructionFailed(error.localizedDescription))
+                                
+                            default:
+                                break
+                            }
+                        }
+                    } catch {
+                        await send(.reconstructionFailed(error.localizedDescription))
+                    }
+                }
                 
             case .reset:
                 // 상태 초기화
                 state = State()
-                return .none
+                return .send(.setupSession)
                 
             case .sessionStateChanged:
                 print("Session state changed")
@@ -144,6 +214,11 @@ struct AppFeature {
             case .captureProgressUpdated(let current, let total):
                 state.currentImageCount = current
                 state.totalImageCount = total
+                state.numberOfShotsTaken = current
+                return .none
+                
+            case .sessionMaxImagesUpdated(let max):
+                state.maximumNumberOfInputImages = max
                 return .none
                 
             case .reconstructionProgressUpdated(let fraction):
@@ -162,14 +237,11 @@ struct AppFeature {
                 print("Reconstruction error: \(error)")
                 return .none
                 
-                
             case .toggleCaptureMode:
-                // 캡처 모드 변경
                 state.captureMode = state.captureMode.nextMode
-                return .none
+                return .send(.reset)
                 
             case .resetState:
-                // 상태 초기화
                 state.currentOrbit = .orbit1
                 state.isObjectFlipped = false
                 state.hasIndicatedObjectCannotBeFlipped = false
@@ -178,12 +250,10 @@ struct AppFeature {
                 return .none
                 
             case .setCurrentOrbit(let orbit):
-                // 현재 orbit 변경
                 state.currentOrbit = orbit
                 return .none
                 
             case .flipObject:
-                // 객체 뒤집기
                 state.isObjectFlipped.toggle()
                 return .none
             }
