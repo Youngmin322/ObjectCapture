@@ -10,11 +10,27 @@
 		540E831D2EEBEEAE001CED27 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 540E831C2EEBEEAE001CED27 /* ComposableArchitecture */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		54441BF02EEFF2FB00A24DC8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 54EB1E3D2EDD63D100C7F374 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 54EB1E442EDD63D100C7F374;
+			remoteInfo = ObjectCapture;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		54441BEC2EEFF2FB00A24DC8 /* ObjectCaptureTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ObjectCaptureTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		54EB1E452EDD63D100C7F374 /* ObjectCapture.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ObjectCapture.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		54441BED2EEFF2FB00A24DC8 /* ObjectCaptureTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ObjectCaptureTests;
+			sourceTree = "<group>";
+		};
 		54EB1E472EDD63D100C7F374 /* ObjectCapture */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = ObjectCapture;
@@ -23,6 +39,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		54441BE92EEFF2FB00A24DC8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		54EB1E422EDD63D100C7F374 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -38,6 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				54EB1E472EDD63D100C7F374 /* ObjectCapture */,
+				54441BED2EEFF2FB00A24DC8 /* ObjectCaptureTests */,
 				54EB1E462EDD63D100C7F374 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -46,6 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				54EB1E452EDD63D100C7F374 /* ObjectCapture.app */,
+				54441BEC2EEFF2FB00A24DC8 /* ObjectCaptureTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,6 +78,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		54441BEB2EEFF2FB00A24DC8 /* ObjectCaptureTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 54441BF22EEFF2FB00A24DC8 /* Build configuration list for PBXNativeTarget "ObjectCaptureTests" */;
+			buildPhases = (
+				54441BE82EEFF2FB00A24DC8 /* Sources */,
+				54441BE92EEFF2FB00A24DC8 /* Frameworks */,
+				54441BEA2EEFF2FB00A24DC8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				54441BF12EEFF2FB00A24DC8 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				54441BED2EEFF2FB00A24DC8 /* ObjectCaptureTests */,
+			);
+			name = ObjectCaptureTests;
+			packageProductDependencies = (
+			);
+			productName = ObjectCaptureTests;
+			productReference = 54441BEC2EEFF2FB00A24DC8 /* ObjectCaptureTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		54EB1E442EDD63D100C7F374 /* ObjectCapture */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 54EB1E522EDD63D300C7F374 /* Build configuration list for PBXNativeTarget "ObjectCapture" */;
@@ -83,9 +131,13 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2610;
+				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					54441BEB2EEFF2FB00A24DC8 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 54EB1E442EDD63D100C7F374;
+					};
 					54EB1E442EDD63D100C7F374 = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
@@ -109,11 +161,19 @@
 			projectRoot = "";
 			targets = (
 				54EB1E442EDD63D100C7F374 /* ObjectCapture */,
+				54441BEB2EEFF2FB00A24DC8 /* ObjectCaptureTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		54441BEA2EEFF2FB00A24DC8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		54EB1E432EDD63D100C7F374 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,6 +184,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		54441BE82EEFF2FB00A24DC8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		54EB1E412EDD63D100C7F374 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -133,7 +200,59 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		54441BF12EEFF2FB00A24DC8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 54EB1E442EDD63D100C7F374 /* ObjectCapture */;
+			targetProxy = 54441BF02EEFF2FB00A24DC8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		54441BF32EEFF2FB00A24DC8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5R33532VPH;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.kr.youngmin.ObjectCaptureTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ObjectCapture.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ObjectCapture";
+			};
+			name = Debug;
+		};
+		54441BF42EEFF2FB00A24DC8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5R33532VPH;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.kr.youngmin.ObjectCaptureTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ObjectCapture.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ObjectCapture";
+			};
+			name = Release;
+		};
 		54EB1E502EDD63D300C7F374 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -326,6 +445,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		54441BF22EEFF2FB00A24DC8 /* Build configuration list for PBXNativeTarget "ObjectCaptureTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				54441BF32EEFF2FB00A24DC8 /* Debug */,
+				54441BF42EEFF2FB00A24DC8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		54EB1E402EDD63D100C7F374 /* Build configuration list for PBXProject "ObjectCapture" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
