@@ -28,6 +28,7 @@ struct AppFeature {
         var processingMessage = ""
         var modelURL: URL?
         var showOverlaySheets = false
+        var showModelView = false
         var currentImageCount = 0
         var totalImageCount = 0
         
@@ -84,25 +85,84 @@ struct AppFeature {
         case flipObject
         
         case setupSession
-         case startDetecting
-         case startCapturing
-         case finishCapturing
-         case setShowOverlaySheets(Bool)
-         case startReconstruction
-         case reset
-         
-         // 세션 업데이트
-         case sessionStateChanged
-         case captureProgressUpdated(current: Int, total: Int)
-         case reconstructionProgressUpdated(Float)
-         case reconstructionCompleted(URL)
-         case reconstructionFailed(String)
+        case startDetecting
+        case startCapturing
+        case finishCapturing
+        case setShowOverlaySheets(Bool)
+        case startReconstruction
+        case reset
+        
+        // 세션 업데이트
+        case sessionStateChanged
+        case captureProgressUpdated(current: Int, total: Int)
+        case reconstructionProgressUpdated(Float)
+        case reconstructionCompleted(URL)
+        case reconstructionFailed(String)
     }
     
     // MARK: Reducer
     var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
+            case .setupSession:
+                print("Setup session called")
+                return .none
+                
+            case .startDetecting:
+                print("start detecting called")
+                return .none
+                
+            case .startCapturing:
+                state.isCapturing = true
+                return .none
+                
+            case .finishCapturing:
+                state.isCapturing = false
+                state.showProcessButton = true
+                print("Finish Capturing")
+                return .none
+                
+            case .setShowOverlaySheets(let show):
+                guard show != state.showOverlaySheets else { return .none }
+                state.showOverlaySheets = show
+                return .none
+                
+            case .startReconstruction:
+                state.processingMessage = "Preparing reconstruction"
+                print("start reconstruction")
+                return .none
+                
+            case .reset:
+                // 상태 초기화
+                state = State()
+                return .none
+                
+            case .sessionStateChanged:
+                print("Session state changed")
+                return .none
+                
+            case .captureProgressUpdated(let current, let total):
+                state.currentImageCount = current
+                state.totalImageCount = total
+                return .none
+                
+            case .reconstructionProgressUpdated(let fraction):
+                state.processingMessage = "Processing... \(Int(fraction * 100))%"
+                return .none
+                
+            case .reconstructionCompleted(let url):
+                state.processingMessage = "Complete! (MyModel.usdz)"
+                state.modelURL = url
+                state.showModelView = true
+                print("Model created: \(url)")
+                return .none
+                
+            case .reconstructionFailed(let error):
+                state.processingMessage = "Error: \(error)"
+                print("Reconstruction error: \(error)")
+                return .none
+                
+                
             case .toggleCaptureMode:
                 // 캡처 모드 변경
                 state.captureMode = state.captureMode.nextMode
