@@ -11,7 +11,7 @@ import RealityKit
 import ComposableArchitecture
 
 struct ObjectCaptureSessionClient {
-    var session: @Sendable () -> ObjectCaptureSession
+    var session: @MainActor @Sendable () -> ObjectCaptureSession
     var start: @MainActor @Sendable (URL, ObjectCaptureSession.Configuration) -> Void
     var startDetecting: @MainActor @Sendable () -> Bool
     var startCapturing: @MainActor @Sendable () -> Void
@@ -24,7 +24,7 @@ struct ObjectCaptureSessionClient {
 }
 
 extension ObjectCaptureSessionClient: DependencyKey {
-    static let liveValue: Self = {
+    @MainActor static let liveValue: Self = {
         let session = ObjectCaptureSession()
         
         return Self(
@@ -58,6 +58,20 @@ extension ObjectCaptureSessionClient: DependencyKey {
             }
         )
     }()
+    
+    @MainActor
+    static let testValue = Self(
+        session: { ObjectCaptureSession() },
+        start: { _, _ in },
+        startDetecting: { true },
+        startCapturing: { },
+        finish: { },
+        pause: { },
+        resume: { },
+        state: { .ready },
+        numberOfShotsTaken: { 0 },
+        maximumNumberOfInputImages: { 100 }
+    )
 }
 
 extension DependencyValues {
@@ -66,3 +80,4 @@ extension DependencyValues {
         set { self[ObjectCaptureSessionClient.self] = newValue }
     }
 }
+
