@@ -6,16 +6,19 @@
 //
 
 import SwiftUI
-import SwiftData
+import ComposableArchitecture
 
 @main
 struct ObjectCaptureApp: App {
-    @State private var appModel = AppDataModel()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(appModel)
+                .environment(
+                    Store(initialState: AppFeature.State()) {
+                        AppFeature()
+                    }
+                )
         }
     }
 }

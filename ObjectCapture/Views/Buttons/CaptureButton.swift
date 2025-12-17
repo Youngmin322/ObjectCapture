@@ -7,9 +7,11 @@
 
 import SwiftUI
 import RealityKit
+import ComposableArchitecture
 
 struct CaptureButton: View {
-    @Environment(AppDataModel.self) var appModel
+    @Environment(Store<AppFeature.State, AppFeature.Action>.self) var store
+    
     var session: ObjectCaptureSession
     let showProcessButton: Bool
     let onContinue: () -> Void
@@ -32,6 +34,7 @@ struct CaptureButton: View {
                         .padding(.vertical, 20)
                         .background(.blue)
                         .clipShape(Capsule())
+                        .glassEffect()
                 }
             })
     }
@@ -39,7 +42,7 @@ struct CaptureButton: View {
     private var buttonLabel: String? {
         switch session.state {
         case .ready:
-            return appModel.captureMode == .object ? "Continue" : "Start Capture"
+            return store.captureMode == .object ? "Continue" : "Start Capture"
         case .detecting:
             return "Start Capture"
         case .capturing:
@@ -52,7 +55,7 @@ struct CaptureButton: View {
     private func performAction() {
         switch session.state {
         case .ready:
-            if appModel.captureMode == .object {
+            if store.captureMode == .object {
                 onContinue()
             } else {
                 onStartCapture()

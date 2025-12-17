@@ -7,9 +7,10 @@
 
 import SwiftUI
 import RealityKit
+import ComposableArchitecture
 
 struct ContentView: View {
-    @Environment(AppDataModel.self) var appModel
+    @Environment(Store<AppFeature.State, AppFeature.Action>.self) var store
     @State private var viewModel: CaptureViewModel? = nil
     @State private var showOnboardingView = false
     
@@ -53,7 +54,7 @@ struct ContentView: View {
                     
                     HStack {
                         HStack {
-
+                            
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.leading, 20)
@@ -73,18 +74,18 @@ struct ContentView: View {
                 
                 VStack {
                     Spacer()
-                                        
+                    
                     HStack {
                         HStack {
                             if case .capturing = viewModel.session.state {
                                 CaptureProgressView(session: viewModel.session)
                             }
                         }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
                         
                         if case .capturing = viewModel.session.state {
-                            HStack { 
+                            HStack {
                                 Spacer()
                                 CaptureButton(
                                     session: viewModel.session,
@@ -112,7 +113,7 @@ struct ContentView: View {
                         HStack {
                             ModeButton()
                         }
-                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .padding(.bottom, 40)
                 }
@@ -147,7 +148,7 @@ struct ContentView: View {
         .onAppear {
             if viewModel == nil {
                 let vm = CaptureViewModel()
-                vm.appModel = appModel
+                vm.appModel = store
                 vm.setupSession()
                 viewModel = vm
             }

@@ -6,22 +6,18 @@
 //
 
 import SwiftUI
+import ComposableArchitecture
 
 struct ModeButton: View {
-    @Environment(AppDataModel.self) var appModel
-
+    @Environment(Store<AppFeature.State, AppFeature.Action>.self) var store
+    
     var body: some View {
         Button(action: {
-            switch appModel.captureMode {
-            case .object:
-                appModel.captureMode = .area
-            case .area:
-                appModel.captureMode = .object
-            }
+            store.send(.toggleCaptureMode)
         }, label: {
             ZStack {
                 VStack {
-                    switch appModel.captureMode {
+                    switch store.captureMode {
                     case .area:
                         Image(systemName: "circle.dashed")
                             .resizable()
@@ -32,7 +28,7 @@ struct ModeButton: View {
                 }
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 22)
-                .foregroundStyle(.white)
+                .foregroundColor(.white)
             }
             .padding(10)
             .contentShape(.rect)
@@ -42,5 +38,9 @@ struct ModeButton: View {
 
 #Preview {
     ModeButton()
-        .environment(AppDataModel())
+        .environment(
+            Store(initialState: AppFeature.State()) {
+                AppFeature()
+            }
+        )
 }
