@@ -6,3 +6,9 @@
 //
 
 import Foundation
+import CloudKit
+import ComposableArchitecture
+
+struct CloudKitClient {
+    
+}
