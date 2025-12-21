@@ -107,16 +107,60 @@ struct AppFeature {
         // 세션 모니터링
         case monitorSessionState
         case sessionMaxImagesUpdated(Int)
+        
+        // 업로드 액션
+        case uploadModel
+        case uploadStarted
+        case uploadCompleted(String)
+        case uploadFailed(String)
+        
     }
-    
     
     @Dependency(\.captureSession) var captureSession
     @Dependency(\.fileManager) var fileManager
+    @Dependency(\.networkClient) var networkClient
     
     // MARK: Reducer
     var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
+            case .uploadModel:
+                guard let modelURL = state.modelURL else {
+                    return .none
+                }
+                
+                state.processingMessage = "Uploading to server..."
+                
+                return .run { send in
+                    await send(.uploadStarted)
+                    
+                    do {
+                        let response = try await networkClient.uploadModel(modelURL)
+                        
+                        if response.success {
+                            await send(.uploadCompleted(response.message))
+                        } else {
+                            await send(.uploadFailed(response.message))
+                        }
+                    } catch {
+                        await send(.uploadFailed(error.localizedDescription))
+                    }
+                }
+                
+            case .uploadStarted:
+                print("업로드 시작")
+                return .none
+                
+            case .uploadCompleted(let message):
+                state.processingMessage = "업로드 완료 \(message)"
+                print("업로드 완료 \(message)")
+                return .none
+                
+            case .uploadFailed(let error):
+                state.processingMessage = "업로드 실패: \(error)"
+                print("업로드 실패: \(error)")
+                return .none
+                
             case .onAppear:
                 return .send(.setupSession)
                 
