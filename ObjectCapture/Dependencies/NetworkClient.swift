@@ -33,7 +33,9 @@ extension NetworkClient: DependencyKey {
     
     static let liveValue = Self(
         uploadModel: { fileURL in
-            let serverURL = URL(string: "http://192.168.XX.XX:8000/upload-model")!
+            
+            let IPAddress = "192.0.0.3"
+            let serverURL = URL(string: "http://\(IPAddress):8000/upload-model")!
             
             // HTTP Request 설정
             var request = URLRequest(url: serverURL)
