@@ -25,6 +25,16 @@
 		54EB1E452EDD63D100C7F374 /* ObjectCapture.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ObjectCapture.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5447C2082EF90B830009D7A0 /* Exceptions for "ObjectCapture" folder in "ObjectCapture" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 54EB1E442EDD63D100C7F374 /* ObjectCapture */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		54441BED2EEFF2FB00A24DC8 /* ObjectCaptureTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -33,6 +43,9 @@
 		};
 		54EB1E472EDD63D100C7F374 /* ObjectCapture */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5447C2082EF90B830009D7A0 /* Exceptions for "ObjectCapture" folder in "ObjectCapture" target */,
+			);
 			path = ObjectCapture;
 			sourceTree = "<group>";
 		};
