@@ -31,10 +31,6 @@ extension DependencyValues {
 
 extension NetworkClient: DependencyKey {
     
-    enum NetworkError: Error {
-        case invalidResponse
-    }
-    
     static let liveValue = Self(
         uploadModel: { fileURL in
             let serverURL = URL(string: "http://192.168.XX.XX:8000/upload-model")!
@@ -81,4 +77,8 @@ extension NetworkClient: DependencyKey {
             return uploadResponse
         }
     )
+}
+
+enum NetworkError: Error, Equatable {
+    case invalidResponse
 }
