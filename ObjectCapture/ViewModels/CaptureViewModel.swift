@@ -13,7 +13,7 @@ import ComposableArchitecture
 @Observable
 class CaptureViewModel {
     // MARK: - Properties
-    var session = ObjectCaptureSession()
+    var session: ObjectCaptureSession
     var isCapturing = false
     var showProcessButton = false
     var hasDetectionFailed = false
@@ -22,13 +22,19 @@ class CaptureViewModel {
     var modelURL: URL?
     var showOverlaySheets = false
     var currentImageCount = 0
-    var totalImageCount = 0                      
+    var totalImageCount = 0
     
     var appModel: Store<AppFeature.State, AppFeature.Action>!
     
     private let fileManager = FileManagerService()
     private var stateMonitorTask: Task<Void, Never>?
     
+    // MARK: - Initialization
+    init() {
+        // 초기화 시 새 세션 생성
+        self.session = ObjectCaptureSession()
+        print("New ObjectCaptureSession created")
+    }
     
     // MARK: - Session Setup
     func setupSession() {
@@ -38,7 +44,9 @@ class CaptureViewModel {
         var config = ObjectCaptureSession.Configuration()
         config.isOverCaptureEnabled = (appModel.captureMode == .object)
         
+        print("Starting session with config...")
         session.start(imagesDirectory: scansFolder, configuration: config)
+        print("Session started, state: \(session.state)")
         
         startMonitoringCapture()
     }
@@ -60,6 +68,7 @@ class CaptureViewModel {
         stateMonitorTask?.cancel()
         stateMonitorTask = Task {
             for await state in session.stateUpdates {
+                print("Session state changed: \(state)")
                 updateCaptureProgress(state)
             }
         }
@@ -140,36 +149,44 @@ class CaptureViewModel {
     }
     
     private func handleReconstructionOutput(_ output: PhotogrammetrySession.Output, outputFile: URL) async {
-        switch output {
-        case .requestProgress(_, let fraction):
-            processingMessage = "Processing... \(Int(fraction * 100))%"
-            
-        case .processingComplete:
-            processingMessage = "Complete! (MyModel.usdz)"
-            modelURL = outputFile
-            showModelView = true
-            print("Model created: \(outputFile)")
-            
-        case .requestError(_, let error):
-            processingMessage = "Error: \(error.localizedDescription)"
-            print("Reconstruction error: \(error)")
-            
-        default:
-            break
+            switch output {
+            case .requestProgress(_, let fraction):
+                processingMessage = "Processing... \(Int(fraction * 100))%"
+                // UI에 진행률 반영을 위해 Store에 알림
+                appModel.send(.reconstructionProgressUpdated(Float(fraction)))
+                
+            case .processingComplete:
+                processingMessage = "Complete! (MyModel.usdz)"
+                modelURL = outputFile
+                showModelView = true
+                
+                appModel.send(.reconstructionCompleted(outputFile))
+                
+            case .requestError(_, let error):
+                processingMessage = "Error: \(error.localizedDescription)"
+                appModel.send(.reconstructionFailed(error.localizedDescription))
+                
+            default:
+                break
+            }
         }
-    }
     
     // MARK: - Reset
     func reset() {
+        print("Resetting session...")
         stateMonitorTask?.cancel()
         
-        session = ObjectCaptureSession()
-        
+        // 상태 초기화
         showProcessButton = false
         processingMessage = ""
         isCapturing = false
         hasDetectionFailed = false
         showOverlaySheets = false
+        
+        // 새 세션 생성 및 초기화
+        print("Creating new session...")
+        session = ObjectCaptureSession()
         setupSession()
+        print("Reset complete")
     }
 }

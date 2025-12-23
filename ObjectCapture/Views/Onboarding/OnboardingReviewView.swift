@@ -12,6 +12,7 @@ import RealityKit
 struct OnboardingReviewView: View {
     var session: ObjectCaptureSession
     @Binding var showOnboardingView: Bool
+    var onFinish: () -> Void
     
     var body: some View {
         VStack(spacing: 20) {
@@ -26,6 +27,7 @@ struct OnboardingReviewView: View {
             
             VStack(spacing: 15) {
                 Button("계속 촬영하기 (Continue)") {
+                    print("User chose to continue capturing")
                     showOnboardingView = false
                 }
                 .font(.headline)
@@ -36,8 +38,9 @@ struct OnboardingReviewView: View {
                 .cornerRadius(15)
                 
                 Button("촬영 완료 (Finish)") {
-                    session.finish()
+                    print("User chose to finish capturing")
                     showOnboardingView = false
+                    onFinish()  // 콜백 호출
                 }
                 .font(.headline)
                 .padding()

@@ -20,7 +20,9 @@ struct FileManagerService {
     }
     
     func getModelOutputPath() -> URL {
-        getDocumentsDirectory().appendingPathComponent("MyModel.usdz")
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileName = "MyModel-\(UUID().uuidString).usdz"
+        return documents.appendingPathComponent(fileName)
     }
     
     // MARK: - Directory Operations
