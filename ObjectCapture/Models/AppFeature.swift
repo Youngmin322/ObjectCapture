@@ -168,17 +168,17 @@ struct AppFeature {
                 // 세션 상태 / 패스 완료 스트림 구독
                 return .merge(
                     .run { [captureSession] send in
-                        for await s in captureSession.stateUpdates() {
+                        for await s in await captureSession.stateUpdates() {
                             await send(.sessionStateUpdated(s))
-                            let current = captureSession.numberOfShotsTaken()
-                            let total = captureSession.maximumNumberOfInputImages()
+                            let current = await captureSession.numberOfShotsTaken()
+                            let total = await captureSession.maximumNumberOfInputImages()
                             await send(.captureProgressUpdated(current: current, total: total))
                         }
                     }
                     .cancellable(id: "session"),
 
                     .run { [captureSession] send in
-                        for await done in captureSession.userCompletedScanPassUpdates() {
+                        for await done in await captureSession.userCompletedScanPassUpdates() {
                             await send(.scanPassCompleted(done))
                         }
                     }
