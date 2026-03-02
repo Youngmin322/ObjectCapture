@@ -34,7 +34,7 @@ struct CaptureControlButton: View {
             // 2. 촬영 전/대기 중일 때는 모드 전환(Object/Area) 버튼
             else {
                 Button(action: {
-                    store.send(.toggleCaptureMode)
+                    store.send(.captureButtonTapped)
                 }) {
                     ZStack {
                         Circle()

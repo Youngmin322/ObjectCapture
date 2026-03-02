@@ -107,7 +107,7 @@ class CaptureViewModel {
     }
     
     func toggleCaptureMode() {
-        appModel.send(.toggleCaptureMode)
+        appModel.send(.captureButtonTapped)
     }
     
     // MARK: - Sheet Management

@@ -10,11 +10,12 @@ import RealityKit
 import ComposableArchitecture
 
 struct ContentView: View {
-    @Environment(Store<AppFeature.State, AppFeature.Action>.self) var store
+    let store: StoreOf<AppFeature>
+
     @State private var viewModel: CaptureViewModel? = nil
     @State private var showOnboardingView = false
     @State private var isSessionReady = false
-    
+
     var body: some View {
         ZStack {
             if let viewModel = viewModel, isSessionReady {
@@ -26,12 +27,12 @@ struct ContentView: View {
                     // 촬영 중 화면
                     captureView(viewModel: viewModel)
                 }
-                
+
                 // 공통 UI 요소
                 if !viewModel.processingMessage.isEmpty {
                     ProcessingMessageView(message: viewModel.processingMessage)
                 }
-                
+
                 // Sheets
                 Color.clear
                     .sheet(isPresented: Binding(
@@ -68,22 +69,24 @@ struct ContentView: View {
                     ProgressView()
                         .scaleEffect(1.5)
                         .tint(.white)
-                    
+
                     Text("Initializing Camera Session...")
                         .foregroundColor(.white)
                         .font(.headline)
                 }
             }
         }
+        .background(Color.black.ignoresSafeArea())
+        .environment(store)   // 하위 뷰에서 @Environment(StoreOf<AppFeature>.self) 사용 가능
         .onAppear {
             if viewModel == nil {
                 let vm = CaptureViewModel()
                 vm.appModel = store
                 viewModel = vm
-                
+
                 Task {
                     vm.setupSession()
-                    
+
                     for await state in vm.session.stateUpdates {
                         print("Waiting for session ready, current state: \(state)")
                         if case .ready = state {
@@ -107,13 +110,14 @@ struct ContentView: View {
         }
         .task {
             guard let viewModel = viewModel else { return }
-            for await userCompletedScanPass in viewModel.session.userCompletedScanPassUpdates where userCompletedScanPass {
+            for await userCompletedScanPass in viewModel.session.userCompletedScanPassUpdates
+            where userCompletedScanPass {
                 print("Scan pass completed! Showing review...")
                 showOnboardingView = true
             }
         }
     }
-    
+
     // MARK: - 촬영 완료 화면
     @ViewBuilder
     private func completedView(viewModel: CaptureViewModel) -> some View {
@@ -122,11 +126,11 @@ struct ContentView: View {
                 .font(.largeTitle)
                 .bold()
                 .foregroundColor(.white)
-            
+
             Text("\(viewModel.session.numberOfShotsTaken)장의 사진이 캡처되었습니다")
                 .font(.headline)
                 .foregroundColor(.white.opacity(0.8))
-            
+
             VStack(spacing: 16) {
                 Button(action: {
                     viewModel.startReconstruction()
@@ -142,7 +146,7 @@ struct ContentView: View {
                     .background(Color.blue)
                     .cornerRadius(12)
                 }
-                
+
                 Button(action: {
                     isSessionReady = false
                     viewModel.reset()
@@ -161,13 +165,13 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
     }
-    
+
     // MARK: - 촬영 중 화면
     @ViewBuilder
     private func captureView(viewModel: CaptureViewModel) -> some View {
         ObjectCaptureView(session: viewModel.session)
             .blur(radius: viewModel.showOverlaySheets ? 45 : 0)
-        
+
         VStack {
             HStack {
                 if case .detecting = viewModel.session.state {
@@ -176,7 +180,7 @@ struct ContentView: View {
                     CaptureCancelButton { viewModel.reset() }
                 }
                 Spacer()
-                
+
                 if case .capturing = viewModel.session.state {
                     NextButton(
                         action: {
@@ -192,10 +196,10 @@ struct ContentView: View {
             .padding()
             Spacer()
         }
-        
+
         VStack {
             Spacer()
-            
+
             HStack {
                 // 왼쪽 - 촬영 진행률 (캡처 중일 때만)
                 HStack {
@@ -205,8 +209,8 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
-                
-                // 중앙 - 메인 캡처 버튼 (Continue / Start / Finish 등 상태 제어)
+
+                // 중앙 - 메인 캡처 버튼
                 CaptureButton(
                     session: viewModel.session,
                     showProcessButton: viewModel.showProcessButton,
@@ -215,8 +219,9 @@ struct ContentView: View {
                     onFinishCapture: { viewModel.finishCapturing() },
                     onProcess: { viewModel.startReconstruction() }
                 )
-                .frame(width: 200)  
+                .frame(width: 200)
 
+                // 오른쪽 - 모드 전환/셔터 컨트롤
                 HStack {
                     CaptureControlButton(
                         store: store,
@@ -225,17 +230,17 @@ struct ContentView: View {
                     .onTapGesture {
                         // 1. 세션 연결을 끊기 위해 뷰를 먼저 숨김
                         isSessionReady = false
-                        
+
                         // 2. TCA를 통해 세션 리셋 및 모드 전환
-                        store.send(.toggleCaptureMode)
-                        
+                        store.send(.captureModeButtonTapped)
+
                         // 하드웨어 정리 시간
                         Task {
-                            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초
-                            
+                            try? await Task.sleep(nanoseconds: 500_000_000)
+
                             // 4. AppFeature에서 새 세션이 생성되었을 것이므로 뷰모델 세션 업데이트
                             // (TCA Dependency 등을 통해 세션이 주입되는 구조라면 해당 세션 참조)
-                            
+
                             isSessionReady = true
                         }
                     }
@@ -246,71 +251,72 @@ struct ContentView: View {
             .padding(.bottom, 40)
         }
     }
-    
+
     // MARK: - 모델 뷰어 시트
     @ViewBuilder
     private func modelViewSheet(url: URL, viewModel: CaptureViewModel) -> some View {
-        VStack(spacing: 0) {
-            if !store.uploadMessage.isEmpty {
-                HStack {
-                    Image(systemName: store.uploadMessage.contains("✓") ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(store.uploadMessage.contains("✓") ? .green : .red)
-                    
-                    Text(store.uploadMessage)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(store.uploadMessage.contains("✓") ? .green : .red)
-                    
-                    Spacer()
-                }
-                .padding()
-                .background(
-                    store.uploadMessage.contains("✓")
-                        ? Color.green.opacity(0.1)
-                        : Color.red.opacity(0.1)
-                )
-                .transition(.move(edge: .top).combined(with: .opacity))
-                .animation(.spring(duration: 0.3), value: store.uploadMessage)
-            }
-            
-            ARQuickLookView(modelFile: url) {
-                print("Viewer dismissed")
-                // reset()을 호출하지 않고 그냥 뷰만 닫음
-                viewModel.showModelView = false
-            }
-            
+        WithViewStore(store, observe: { $0 }) { viewStore in
             VStack(spacing: 0) {
-                Divider()
-                
-                HStack(spacing: 16) {
-                    Button(action: {
-                        viewModel.showModelView = false
-                        viewModel.reset()
-                    }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 16, weight: .semibold))
-                            Text("Close")
-                                .font(.system(size: 16, weight: .semibold))
+                if !viewStore.uploadMessage.isEmpty {
+                    HStack {
+                        Image(systemName: viewStore.uploadMessage.contains("✓") ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .foregroundColor(viewStore.uploadMessage.contains("✓") ? .green : .red)
+
+                        Text(viewStore.uploadMessage)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(viewStore.uploadMessage.contains("✓") ? .green : .red)
+
+                        Spacer()
+                    }
+                    .padding()
+                    .background(
+                        viewStore.uploadMessage.contains("✓")
+                            ? Color.green.opacity(0.1)
+                            : Color.red.opacity(0.1)
+                    )
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .animation(.spring(duration: 0.3), value: viewStore.uploadMessage)
+                }
+
+                ARQuickLookView(modelFile: url) {
+                    print("Viewer dismissed")
+                    viewModel.showModelView = false
+                }
+
+                VStack(spacing: 0) {
+                    Divider()
+
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            viewModel.showModelView = false
+                            viewModel.reset()
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 16, weight: .semibold))
+                                Text("Close")
+                                    .font(.system(size: 16, weight: .semibold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.gray)
+                            )
                         }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.gray)
+
+                        UploadButton(
+                            store: store,
+                            isUploading: viewStore.isUploading,
+                            hasModel: viewStore.modelURL != nil
                         )
                     }
-                    
-                    UploadButton(
-                        store: store,
-                        isUploading: store.isUploading,
-                        hasModel: store.modelURL != nil
-                    )
+                    .padding()
                 }
-                .padding()
+                .background(Color(.systemBackground))
             }
-            .background(Color(.systemBackground))
+            .ignoresSafeArea(edges: .bottom)
         }
-        .ignoresSafeArea(edges: .bottom)
     }
 }

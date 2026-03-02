@@ -15,7 +15,7 @@ struct UploadButton: View {
     
     var body: some View {
         Button(action: {
-            store.send(.uploadModel)
+            store.send(.uploadButtonTapped)
         }) {
             HStack(spacing: 8) {
                 if isUploading {
