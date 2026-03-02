@@ -108,7 +108,6 @@ class CaptureViewModel {
     
     func toggleCaptureMode() {
         appModel.send(.toggleCaptureMode)
-        reset()
     }
     
     // MARK: - Sheet Management

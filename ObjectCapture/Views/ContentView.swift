@@ -171,13 +171,9 @@ struct ContentView: View {
         VStack {
             HStack {
                 if case .detecting = viewModel.session.state {
-                    CaptureCancelButton {
-                        viewModel.reset()
-                    }
+                    CaptureCancelButton { viewModel.reset() }
                 } else if case .capturing = viewModel.session.state {
-                    CaptureCancelButton {
-                        viewModel.reset()
-                    }
+                    CaptureCancelButton { viewModel.reset() }
                 }
                 Spacer()
                 
@@ -201,6 +197,7 @@ struct ContentView: View {
             Spacer()
             
             HStack {
+                // 왼쪽 - 촬영 진행률 (캡처 중일 때만)
                 HStack {
                     if case .capturing = viewModel.session.state {
                         CaptureProgressView(session: viewModel.session)
@@ -209,34 +206,42 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
                 
-                if case .capturing = viewModel.session.state {
-                    HStack {
-                        Spacer()
-                        CaptureButton(
-                            session: viewModel.session,
-                            showProcessButton: viewModel.showProcessButton,
-                            onContinue: { viewModel.startDetecting() },
-                            onStartCapture: { viewModel.startCapturing() },
-                            onFinishCapture: { viewModel.finishCapturing() },
-                            onProcess: { viewModel.startReconstruction() }
-                        )
-                    }
-                } else {
-                    CaptureButton(
-                        session: viewModel.session,
-                        showProcessButton: viewModel.showProcessButton,
-                        onContinue: { viewModel.startDetecting() },
-                        onStartCapture: { viewModel.startCapturing() },
-                        onFinishCapture: { viewModel.finishCapturing() },
-                        onProcess: { viewModel.startReconstruction() }
-                    )
-                    .frame(width: 200)
-                }
-                
+                // 중앙 - 메인 캡처 버튼 (Continue / Start / Finish 등 상태 제어)
+                CaptureButton(
+                    session: viewModel.session,
+                    showProcessButton: viewModel.showProcessButton,
+                    onContinue: { viewModel.startDetecting() },
+                    onStartCapture: { viewModel.startCapturing() },
+                    onFinishCapture: { viewModel.finishCapturing() },
+                    onProcess: { viewModel.startReconstruction() }
+                )
+                .frame(width: 200)  
+
                 HStack {
-                    ModeButton()
+                    CaptureControlButton(
+                        store: store,
+                        session: viewModel.session
+                    )
+                    .onTapGesture {
+                        // 1. 세션 연결을 끊기 위해 뷰를 먼저 숨김
+                        isSessionReady = false
+                        
+                        // 2. TCA를 통해 세션 리셋 및 모드 전환
+                        store.send(.toggleCaptureMode)
+                        
+                        // 하드웨어 정리 시간
+                        Task {
+                            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초
+                            
+                            // 4. AppFeature에서 새 세션이 생성되었을 것이므로 뷰모델 세션 업데이트
+                            // (TCA Dependency 등을 통해 세션이 주입되는 구조라면 해당 세션 참조)
+                            
+                            isSessionReady = true
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding()
             }
             .padding(.bottom, 40)
         }

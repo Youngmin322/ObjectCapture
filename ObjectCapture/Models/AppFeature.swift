@@ -254,8 +254,9 @@ struct AppFeature {
                 
             case .reset:
                 // 상태 초기화
-                state = State()
-                return .send(.setupSession)
+                state.isCapturing = false
+                state.showProcessButton = false
+                return .none
                 
             case .sessionStateChanged:
                 print("Session state changed")
@@ -288,7 +289,7 @@ struct AppFeature {
                 return .none
                 
             case .toggleCaptureMode:
-                state.captureMode = state.captureMode.nextMode
+                state.captureMode = (state.captureMode == .object) ? .area : .object
                 return .send(.reset)
                 
             case .resetState:
@@ -329,7 +330,7 @@ struct AppFeature {
                 state.isUploading = false
                 state.uploadMessage = "업로드 성공: \(response.message)"
                 return .none
-
+                
             case .uploadResponse(.failure(let error)):
                 state.isUploading = false
                 state.uploadMessage = "업로드 실패: \(error.localizedDescription)"

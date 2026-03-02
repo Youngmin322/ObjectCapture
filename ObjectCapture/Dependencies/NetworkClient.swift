@@ -9,13 +9,13 @@ import Foundation
 import ComposableArchitecture
 
 // 1. 서버가 돌려줄 응답의 형식을 정의
-struct UploadResponse: Codable, Equatable {
+nonisolated struct UploadResponse: Codable, Equatable {
     let success: Bool
     let message: String
     let fileId: String?
 }
 
-// 2. 클라이언트의 인터페이스를 정의합니다.
+// 2. 클라이언트의 인터페이스를 정의
 struct NetworkClient {
     // URL(파일위치)을 받아서 UploadResponse를 돌려주는 비동기 함수
     var uploadModel: @Sendable (URL) async throws -> UploadResponse
@@ -34,7 +34,7 @@ extension NetworkClient: DependencyKey {
     static let liveValue = Self(
         uploadModel: { fileURL in
             
-            let IPAddress = "192.0.0.3"
+            let IPAddress = "192.168.45.87"
             let serverURL = URL(string: "http://\(IPAddress):8000/upload-model")!
             
             // HTTP Request 설정
