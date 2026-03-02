@@ -64,16 +64,7 @@ struct ContentView: View {
                         }
                     }
             } else {
-                // 로딩 화면
-                VStack(spacing: 20) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .tint(.white)
-
-                    Text("Initializing Camera Session...")
-                        .foregroundColor(.white)
-                        .font(.headline)
-                }
+                InitializationLoadingView()
             }
         }
         .background(Color.black.ignoresSafeArea())
