@@ -11,9 +11,11 @@ import ComposableArchitecture
 
 @Reducer
 struct AppFeature {
+
     // MARK: State
     @ObservableState
     struct State: Equatable {
+        // 캡처 모드 / 오빗 등
         var captureMode: CaptureMode = .object
         var currentOrbit: Orbit = .orbit1
         var isObjectFlipped: Bool = false
@@ -21,35 +23,41 @@ struct AppFeature {
         var hasIndicatedObjectCannotBeFlipped: Bool = false
         var hasIndicatedFlipObjectAnyway: Bool = false
         var tutorialPlayedOnce: Bool = false
-        
-        var isCapturing = false
-        var showProcessButton = false
-        var hasDetectionFailed = false
-        var processingMessage = ""
+
+        // 세션 상태에 따른 UI
+        var sessionState: ObjectCaptureSession.CaptureState = .ready
+        var isCapturing: Bool = false
+        var showProcessButton: Bool = false
+        var hasDetectionFailed: Bool = false
+        var processingMessage: String = ""
+        var showOverlaySheets: Bool = false
+
+        // 캡처 진행도
+        var currentImageCount: Int = 0
+        var totalImageCount: Int = 0
+        var maximumNumberOfInputImages: Int = 100
+
+        // 3D 모델
         var modelURL: URL?
-        var showOverlaySheets = false
-        var showModelView = false
-        var currentImageCount = 0
-        var totalImageCount = 0
-        
-        var numberOfShotsTaken = 0
-        var maximumNumberOfInputImages = 100
-        
-        var isUploading = false // 업로드 여부
-        var uploadMessage = "" // 화면에 보여줄 결과 메시지
-        
+        var showModelView: Bool = false
+
+        // 업로드
+        var isUploading: Bool = false
+        var uploadMessage: String = ""
+
         // MARK: Nested Types
+
         enum CaptureMode: Equatable {
             case object
             case area
-            
+
             var displayName: String {
                 switch self {
                 case .object: return "Object"
                 case .area: return "Area"
                 }
             }
-            
+
             var nextMode: CaptureMode {
                 switch self {
                 case .object: return .area
@@ -57,14 +65,14 @@ struct AppFeature {
                 }
             }
         }
-        
+
         enum Orbit: Int, CaseIterable, Identifiable {
             case orbit1 = 1
             case orbit2 = 2
             case orbit3 = 3
-            
+
             var id: Int { rawValue }
-            
+
             var displayName: String {
                 switch self {
                 case .orbit1: return "First Pass"
@@ -72,7 +80,7 @@ struct AppFeature {
                 case .orbit3: return "Third Pass"
                 }
             }
-            
+
             func next() -> Orbit {
                 switch self {
                 case .orbit1: return .orbit2
@@ -81,168 +89,217 @@ struct AppFeature {
                 }
             }
         }
+
+        // 버튼 레이블 등 UI 계산 프로퍼티
+        var captureButtonTitle: String? {
+            switch sessionState {
+            case .ready:
+                return captureMode == .object ? "Continue" : "Start Capture"
+            case .detecting:
+                return "Start Capture"
+            case .capturing:
+                return nil
+            default:
+                return nil
+            }
+        }
     }
-    
+
     // MARK: Action
     enum Action: Equatable {
+        // 라이프사이클
         case onAppear
-        
-        case toggleCaptureMode
-        case resetState
-        case setCurrentOrbit(State.Orbit)
-        case flipObject
-        
         case setupSession
-        case startDetecting
-        case startCapturing
-        case finishCapturing
-        case setShowOverlaySheets(Bool)
-        case startReconstruction
         case reset
-        
-        // 세션 업데이트
-        case sessionStateChanged
+
+        // 세션 내 상태 업데이트(내부용)
+        case sessionStateUpdated(ObjectCaptureSession.CaptureState)
         case captureProgressUpdated(current: Int, total: Int)
+        case scanPassCompleted(Bool)
+
+        // 사용자의 입력
+        case captureModeButtonTapped           // 모드 토글 버튼
+        case captureButtonTapped               // 가운데 큰 버튼
+        case cancelButtonTapped                // 상단 취소 버튼
+        case finishCapturingTapped             // 온보딩에서 "Finish"
+        case toggleOverlaySheets(Bool)         // 시트 표시/숨김
+        case reconstructionButtonTapped        // "3D 모델 생성"
+        case startOverButtonTapped             // "새로 시작"
+        case modelSheetDismissed               // ARQuickLook 닫기
+
+        // Photogrammetry
         case reconstructionProgressUpdated(Float)
         case reconstructionCompleted(URL)
         case reconstructionFailed(String)
-        
-        // 세션 모니터링
-        case monitorSessionState
-        case sessionMaxImagesUpdated(Int)
-        
-        // 업로드 액션
-        case uploadModel
-        case uploadStarted
-        case uploadCompleted(String)
-        case uploadFailed(String)
-        
+
+        // 업로드
         case uploadButtonTapped
-        case uploadResponse(Result<UploadResponse, NetworkError>) // 서버 응답 결과
-        
+        case uploadResponse(Result<UploadResponse, NetworkError>)
     }
-    
+
+    // MARK: Dependencies
     @Dependency(\.captureSession) var captureSession
     @Dependency(\.fileManager) var fileManager
     @Dependency(\.networkClient) var networkClient
-    
+
     // MARK: Reducer
     var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
-            case .uploadModel:
-                guard let modelURL = state.modelURL else {
-                    return .none
-                }
-                
-                state.processingMessage = "Uploading to server..."
-                
-                return .run { send in
-                    await send(.uploadStarted)
-                    
-                    do {
-                        let response = try await networkClient.uploadModel(modelURL)
-                        
-                        if response.success {
-                            await send(.uploadCompleted(response.message))
-                        } else {
-                            await send(.uploadFailed(response.message))
-                        }
-                    } catch {
-                        await send(.uploadFailed(error.localizedDescription))
-                    }
-                }
-                
-            case .uploadStarted:
-                print("업로드 시작")
-                return .none
-                
-            case .uploadCompleted(let message):
-                state.processingMessage = "업로드 완료 \(message)"
-                print("업로드 완료 \(message)")
-                return .none
-                
-            case .uploadFailed(let error):
-                state.processingMessage = "업로드 실패: \(error)"
-                print("업로드 실패: \(error)")
-                return .none
-                
+
+            // MARK: 라이프사이클
+
             case .onAppear:
                 return .send(.setupSession)
-                
+
             case .setupSession:
                 let scansFolder = fileManager.getScansDirectory()
                 fileManager.clearDirectory(scansFolder)
-                
+
                 var config = ObjectCaptureSession.Configuration()
                 config.isOverCaptureEnabled = (state.captureMode == .object)
-                
+
                 captureSession.start(scansFolder, config)
-                print("Setup session called")
-                
-                return .run { send in
-                    // 세션 상태 모니터링 시작
-                    await send(.monitorSessionState)
+                state.sessionState = captureSession.state()
+                state.currentImageCount = captureSession.numberOfShotsTaken()
+                state.totalImageCount = captureSession.maximumNumberOfInputImages()
+                state.maximumNumberOfInputImages = captureSession.maximumNumberOfInputImages()
+
+                // 세션 상태 / 패스 완료 스트림 구독
+                return .merge(
+                    .run { [captureSession] send in
+                        for await s in await captureSession.stateUpdates() {
+                            await send(.sessionStateUpdated(s))
+                            let current = await captureSession.numberOfShotsTaken()
+                            let total = await captureSession.maximumNumberOfInputImages()
+                            await send(.captureProgressUpdated(current: current, total: total))
+                        }
+                    }
+                    .cancellable(id: "session"),
+
+                    .run { [captureSession] send in
+                        for await done in await captureSession.userCompletedScanPassUpdates() {
+                            await send(.scanPassCompleted(done))
+                        }
+                    }
+                    .cancellable(id: "session")
+                )
+
+            case .reset:
+                // 세션 관련 이펙트 취소 후, 상태 초기화 + 새 세션 준비
+                state = State(captureMode: state.captureMode)
+                return .merge(
+                    .cancel(id: "session"),
+                    .cancel(id: "reconstruction"),
+                    .cancel(id: "upload"),
+                    .send(.setupSession)
+                )
+
+            // MARK: 세션 내부 상태 업데이트 (내부 액션)
+            case let .sessionStateUpdated(newState):
+                state.sessionState = newState
+                switch newState {
+                case .capturing:
+                    state.isCapturing = true
+                case .completed:
+                    state.isCapturing = false
+                    state.showProcessButton = true
+                default:
+                    break
                 }
-                
-            case .monitorSessionState:
                 return .none
-                
-            case .startDetecting:
-                let success = captureSession.startDetecting()
-                state.hasDetectionFailed = !success
-                print("Start detecting: \(success)")
+
+            case let .captureProgressUpdated(current, total):
+                state.currentImageCount = current
+                state.totalImageCount = total
+                state.maximumNumberOfInputImages = max(state.maximumNumberOfInputImages, total)
                 return .none
-                
-            case .startCapturing:
-                captureSession.startCapturing()
-                state.isCapturing = true
-                print("Start capturing")
+
+            case let .scanPassCompleted(done):
+                if done {
+                    state.showOverlaySheets = true
+                }
                 return .none
-                
-            case .finishCapturing:
+
+            // MARK: 사용자 입력 - 세션 제어
+            case .captureModeButtonTapped:
+                state.captureMode = state.captureMode.nextMode
+                return .send(.reset)
+
+            case .captureButtonTapped:
+                let sessionState = captureSession.state()
+                switch sessionState {
+                case .ready:
+                    if state.captureMode == .object {
+                        let success = captureSession.startDetecting()
+                        state.hasDetectionFailed = !success
+                    } else {
+                        captureSession.startCapturing()
+                        state.isCapturing = true
+                    }
+                case .detecting:
+                    captureSession.startCapturing()
+                    state.isCapturing = true
+                default:
+                    break
+                }
+                return .none
+
+            case .cancelButtonTapped:
+                captureSession.finish()
+                state.isCapturing = false
+                state.showProcessButton = false
+                return .none
+
+            case .finishCapturingTapped:
                 captureSession.finish()
                 state.isCapturing = false
                 state.showProcessButton = true
-                print("Finish capturing")
+                state.showOverlaySheets = false
                 return .none
-                
-            case .setShowOverlaySheets(let show):
+
+            case let .toggleOverlaySheets(show):
                 guard show != state.showOverlaySheets else { return .none }
                 state.showOverlaySheets = show
-                
                 if show {
                     captureSession.pause()
-                    print("Session paused")
                 } else {
                     captureSession.resume()
-                    print("Session resumed")
                 }
                 return .none
-                
-            case .startReconstruction:
+
+            case .startOverButtonTapped:
+                return .send(.reset)
+
+            case .modelSheetDismissed:
+                state.showModelView = false
+                return .none
+
+            // MARK: Photogrammetry
+
+            case .reconstructionButtonTapped:
+                guard state.modelURL == nil else {
+                    state.showModelView = true
+                    return .none
+                }
+
                 state.processingMessage = "Preparing reconstruction..."
-                print("Start reconstruction")
-                
                 let inputFolder = fileManager.getScansDirectory()
                 let outputFile = fileManager.getModelOutputPath()
-                
+
                 return .run { send in
                     do {
                         let photoSession = try PhotogrammetrySession(input: inputFolder)
                         try photoSession.process(requests: [.modelFile(url: outputFile)])
-                        
+
                         for try await output in photoSession.outputs {
                             switch output {
                             case .requestProgress(_, let fraction):
                                 await send(.reconstructionProgressUpdated(Float(fraction)))
-                                
                             case .processingComplete:
                                 await send(.reconstructionCompleted(outputFile))
-                                
                             case .requestError(_, let error):
                                 await send(.reconstructionFailed(error.localizedDescription))
-                                
                             default:
                                 break
                             }
@@ -251,86 +308,48 @@ struct AppFeature {
                         await send(.reconstructionFailed(error.localizedDescription))
                     }
                 }
-                
-            case .reset:
-                // 상태 초기화
-                state = State()
-                return .send(.setupSession)
-                
-            case .sessionStateChanged:
-                print("Session state changed")
-                return .none
-                
-            case .captureProgressUpdated(let current, let total):
-                state.currentImageCount = current
-                state.totalImageCount = total
-                state.numberOfShotsTaken = current
-                return .none
-                
-            case .sessionMaxImagesUpdated(let max):
-                state.maximumNumberOfInputImages = max
-                return .none
-                
-            case .reconstructionProgressUpdated(let fraction):
+                .cancellable(id: "reconstruction")
+
+            case let .reconstructionProgressUpdated(fraction):
                 state.processingMessage = "Processing... \(Int(fraction * 100))%"
                 return .none
-                
-            case .reconstructionCompleted(let url):
+
+            case let .reconstructionCompleted(url):
                 state.processingMessage = "Complete! (MyModel.usdz)"
                 state.modelURL = url
                 state.showModelView = true
-                print("Model created: \(url)")
                 return .none
-                
-            case .reconstructionFailed(let error):
-                state.processingMessage = "Error: \(error)"
-                print("Reconstruction error: \(error)")
+
+            case let .reconstructionFailed(message):
+                state.processingMessage = "Error: \(message)"
                 return .none
-                
-            case .toggleCaptureMode:
-                state.captureMode = state.captureMode.nextMode
-                return .send(.reset)
-                
-            case .resetState:
-                state.currentOrbit = .orbit1
-                state.isObjectFlipped = false
-                state.hasIndicatedObjectCannotBeFlipped = false
-                state.hasIndicatedFlipObjectAnyway = false
-                state.tutorialPlayedOnce = false
-                return .none
-                
-            case .setCurrentOrbit(let orbit):
-                state.currentOrbit = orbit
-                return .none
-                
-            case .flipObject:
-                state.isObjectFlipped.toggle()
-                return .none
-                
+
+            // MARK: 업로드
+
             case .uploadButtonTapped:
-                guard let url = state.modelURL else { return .none }
-                
+                guard let url = state.modelURL, !state.isUploading else { return .none }
+
                 state.isUploading = true
-                state.uploadMessage = "업로드 시작"
-                
-                return .run { send in
+                state.uploadMessage = "Uploading..."
+
+                return .run { [networkClient] send in
                     do {
                         let response = try await networkClient.uploadModel(url)
                         await send(.uploadResponse(.success(response)))
                     } catch let error as NetworkError {
                         await send(.uploadResponse(.failure(error)))
                     } catch {
-                        // 알 수 없는 에러 처리
                         await send(.uploadResponse(.failure(.invalidResponse)))
                     }
                 }
-                
-            case .uploadResponse(.success(let response)):
+                .cancellable(id: "upload")
+
+            case let .uploadResponse(.success(response)):
                 state.isUploading = false
-                state.uploadMessage = "업로드 성공: \(response.message)"
+                state.uploadMessage = "✓ \(response.message)"
                 return .none
 
-            case .uploadResponse(.failure(let error)):
+            case let .uploadResponse(.failure(error)):
                 state.isUploading = false
                 state.uploadMessage = "업로드 실패: \(error.localizedDescription)"
                 return .none

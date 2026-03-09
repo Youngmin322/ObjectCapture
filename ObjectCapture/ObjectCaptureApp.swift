@@ -10,15 +10,13 @@ import ComposableArchitecture
 
 @main
 struct ObjectCaptureApp: App {
-    
+    let store = Store(initialState: AppFeature.State()) {
+        AppFeature()
+    }
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(
-                    Store(initialState: AppFeature.State()) {
-                        AppFeature()
-                    }
-                )
+            ContentView(store: store)
         }
     }
 }
